@@ -347,6 +347,16 @@
           <input id="newExpectedWeeks" type="number" min="1" max="52" value="2" />
         </div>
       </div>
+      <div class="grid-2" style="margin-top:8px;">
+        <div>
+          <label>Vorheriger Lernbaustein (optional)</label>
+          <select id="newPreviousBlock"></select>
+        </div>
+        <div>
+          <label>Filter: nur Fach anzeigen</label>
+          <select id="classPlanFilterSubject"></select>
+        </div>
+      </div>
       <div class="actions" style="margin-top:8px;">
         <button id="addBlockBtn">+ Lernbaustein hinzufügen</button>
       </div>
@@ -426,6 +436,7 @@
       stufe: '',
       maxIntensityPercent: 30,
       subjects: [],
+      classPlanSubjectFilter: 'ALL',
       classPlan: [],
       students: [],
       studentPlans: {},
@@ -440,11 +451,12 @@
         stufe: '7. Klasse',
         maxIntensityPercent: 30,
         subjects: ['Mathematik', 'Deutsch'],
+        classPlanSubjectFilter: 'ALL',
         classPlan: [
-          { id: uid(), subject: 'Mathematik', name: 'Bruchrechnen 1', expectedWeeks: 2 },
-          { id: uid(), subject: 'Mathematik', name: 'Gleichungen', expectedWeeks: 2 },
-          { id: uid(), subject: 'Deutsch', name: 'Leseverstehen', expectedWeeks: 3 },
-          { id: uid(), subject: 'Deutsch', name: 'Argumentieren', expectedWeeks: 2 }
+          { id: uid(), subject: 'Mathematik', name: 'Bruchrechnen 1', expectedWeeks: 2, previousBlockId: '' },
+          { id: uid(), subject: 'Mathematik', name: 'Gleichungen', expectedWeeks: 2, previousBlockId: '' },
+          { id: uid(), subject: 'Deutsch', name: 'Leseverstehen', expectedWeeks: 3, previousBlockId: '' },
+          { id: uid(), subject: 'Deutsch', name: 'Argumentieren', expectedWeeks: 2, previousBlockId: '' }
         ],
         students: ['Lina Steiner', 'Noah Graf', 'Mia Keller'],
         studentPlans: {},
@@ -545,6 +557,8 @@
       }
       if (!state.maxIntensityPercent) state.maxIntensityPercent = 30;
       if (!Array.isArray(state.subjects)) state.subjects = [];
+      if (!state.classPlanSubjectFilter) state.classPlanSubjectFilter = 'ALL';
+      state.classPlan = (state.classPlan || []).map(b => ({ ...b, previousBlockId: b.previousBlockId || '' }));
       if (!state.subjects.length && state.classPlan.length) {
         state.subjects = [...new Set(state.classPlan.map(b => b.subject).filter(Boolean))];
       }
@@ -568,6 +582,17 @@
       const opts = state.subjects.map(s => `<option>${escapeHtml(s)}</option>`).join('');
       newSubject.innerHTML = opts || '<option value="">Bitte Fachliste erfassen</option>';
       subjectBadges.innerHTML = state.subjects.map(s => `<span class="badge">${escapeHtml(s)} <button class="small secondary" data-remove-subject="${escapeHtmlAttr(s)}">x</button></span>`).join('') || '<span class="muted">Noch keine Fächer erfasst.</span>';
+
+      const filterOpts = ['<option value="ALL">Alle Fächer</option>'].concat(
+        state.subjects.map(s => `<option value="${escapeHtmlAttr(s)}" ${state.classPlanSubjectFilter===s?'selected':''}>${escapeHtml(s)}</option>`)
+      ).join('');
+      classPlanFilterSubject.innerHTML = filterOpts;
+
+      const subject = newSubject.value || state.subjects[0] || '';
+      const prevCandidates = state.classPlan.filter(b => !subject || b.subject === subject)
+        .map(b => `<option value="${b.id}">${escapeHtml(b.name)}</option>`)
+        .join('');
+      newPreviousBlock.innerHTML = `<option value="">Keiner</option>${prevCandidates}`;
     }
 
     function renderToolbar() {
@@ -583,7 +608,8 @@
     }
 
     function renderClassPlan() {
-      const rows = state.classPlan.map((b, i) => `
+      const visible = state.classPlan.filter(b => state.classPlanSubjectFilter === 'ALL' || b.subject === state.classPlanSubjectFilter);
+      const rows = visible.map((b, i) => `
         <tr>
           <td>${i+1}</td>
           <td>
@@ -593,12 +619,18 @@
           </td>
           <td><input data-edit="name" data-id="${b.id}" value="${escapeHtml(b.name)}"></td>
           <td><input data-edit="weeks" data-id="${b.id}" type="number" min="1" max="52" value="${Number(b.expectedWeeks)||1}"></td>
+          <td>
+            <select data-edit="previous" data-id="${b.id}">
+              <option value="">Keiner</option>
+              ${state.classPlan.filter(x => x.id !== b.id && x.subject === b.subject).map(x => `<option value="${x.id}" ${x.id===b.previousBlockId?'selected':''}>${escapeHtml(x.name)}</option>`).join('')}
+            </select>
+          </td>
           <td><button class="small secondary" data-remove-block="${b.id}">Entfernen</button></td>
         </tr>
       `).join('');
       classPlanTable.innerHTML = `
-        <tr><th>#</th><th>Fach</th><th>Lernbaustein</th><th>Erwartete Wochen</th><th></th></tr>
-        ${rows || '<tr><td colspan="5" class="muted">Noch keine Lernbausteine erfasst.</td></tr>'}
+        <tr><th>#</th><th>Fach</th><th>Lernbaustein</th><th>Erwartete Wochen</th><th>Vorheriger</th><th></th></tr>
+        ${rows || '<tr><td colspan="6" class="muted">Noch keine Lernbausteine im gewählten Fach erfasst.</td></tr>'}
       `;
     }
 
@@ -893,7 +925,8 @@
           id: b.id || uid(),
           subject: b.subject || '',
           name: b.name || '',
-          expectedWeeks: Number(b.expectedWeeks || 1)
+          expectedWeeks: Number(b.expectedWeeks || 1),
+          previousBlockId: b.previousBlockId || ''
         })) : [];
         state.students.forEach(ensureStudentPlan);
         logNotification('Settings importiert (Demo).');
@@ -963,8 +996,9 @@
         const subject = newSubject.value.trim();
         const name = newBlockName.value.trim();
         const expectedWeeks = Number(newExpectedWeeks.value || 1);
+        const previousBlockId = newPreviousBlock.value || '';
         if (!subject || !name) return alert('Bitte Fach aus Liste und Lernbaustein-Name eingeben.');
-        state.classPlan.push({ id: uid(), subject, name, expectedWeeks });
+        state.classPlan.push({ id: uid(), subject, name, expectedWeeks, previousBlockId });
         state.students.forEach(ensureStudentPlan);
         newBlockName.value = '';
         renderAll();
@@ -1135,6 +1169,7 @@
         if (e.target.dataset.edit === 'subject') block.subject = e.target.value;
         if (e.target.dataset.edit === 'name') block.name = e.target.value;
         if (e.target.dataset.edit === 'weeks') block.expectedWeeks = Number(e.target.value || 1);
+        if (e.target.dataset.edit === 'previous') block.previousBlockId = e.target.value || '';
       }
 
       if (e.target.dataset.planApply && student) {
@@ -1151,6 +1186,15 @@
 
       if (['teacherName','stufe','maxIntensity'].includes(e.target.id)) {
         persistToolbar();
+      }
+
+      if (e.target.id === 'classPlanFilterSubject') {
+        state.classPlanSubjectFilter = e.target.value || 'ALL';
+        renderClassPlan();
+      }
+
+      if (e.target.id === 'newSubject') {
+        renderSubjects();
       }
 
       renderProgress();
