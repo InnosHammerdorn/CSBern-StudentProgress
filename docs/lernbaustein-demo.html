@@ -124,6 +124,77 @@
       margin-top: 3px;
     }
 
+    .weeks-mini {
+      width: 64px;
+      min-width: 64px;
+      flex: 0 0 64px;
+      text-align: center;
+    }
+
+    .subject-row {
+      display: flex;
+      gap: 8px;
+      align-items: end;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+
+    .overall-wrap {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      background: linear-gradient(180deg, #f8fbff, #eef7ff);
+      margin: 8px 0 14px;
+    }
+
+    .overall-bar {
+      height: 18px;
+      border-radius: 999px;
+      background: #dbe8f4;
+      overflow: hidden;
+      position: relative;
+      border: 1px solid #c6d8e9;
+    }
+
+    .overall-bar > span {
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 0%;
+      background: linear-gradient(90deg, #2c83cd 0%, #17b0a5 45%, #57c56a 100%);
+    }
+
+    .donut {
+      --pct: 0;
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      background: conic-gradient(#12a4a8 calc(var(--pct) * 1%), #e4edf5 0);
+      display: grid;
+      place-items: center;
+      margin-right: 12px;
+      box-shadow: inset 0 0 0 1px #d3e2ef;
+    }
+
+    .donut::before {
+      content: attr(data-label);
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: white;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      color: #0f5074;
+      border: 1px solid #d8e6f2;
+    }
+
+    .metric-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
     .progress-card {
       border: 1px solid var(--border);
       border-radius: 10px;
@@ -183,10 +254,20 @@
     <section id="jahresplan" class="tab-content active panel">
       <h3>Fächer & Lernbausteine definieren</h3>
       <p class="muted">Je Eintrag: Fach, Lernbaustein-Name, erwartete Wochen bis Nachweis.</p>
+      <div class="subject-row">
+        <div>
+          <label>Fachliste (separat)</label>
+          <input id="newSubjectName" placeholder="Neues Fach, z. B. Mathematik" />
+        </div>
+        <div class="actions">
+          <button id="addSubjectBtn">+ Fach hinzufügen</button>
+        </div>
+        <div id="subjectBadges"></div>
+      </div>
       <div class="grid-3">
         <div>
-          <label>Fach</label>
-          <input id="newSubject" placeholder="Mathematik" />
+          <label>Fach (aus Liste)</label>
+          <select id="newSubject"></select>
         </div>
         <div>
           <label>Lernbaustein</label>
@@ -275,6 +356,7 @@
       teacherName: '',
       stufe: '',
       maxIntensityPercent: 30,
+      subjects: [],
       classPlan: [],
       students: [],
       studentPlans: {},
@@ -287,6 +369,7 @@
         teacherName: 'Frau Keller',
         stufe: '7. Klasse',
         maxIntensityPercent: 30,
+        subjects: ['Mathematik', 'Deutsch'],
         classPlan: [
           { id: uid(), subject: 'Mathematik', name: 'Bruchrechnen 1', expectedWeeks: 2 },
           { id: uid(), subject: 'Mathematik', name: 'Gleichungen', expectedWeeks: 2 },
@@ -352,6 +435,10 @@
         Object.assign(state, seededDemoData());
       }
       if (!state.maxIntensityPercent) state.maxIntensityPercent = 30;
+      if (!Array.isArray(state.subjects)) state.subjects = [];
+      if (!state.subjects.length && state.classPlan.length) {
+        state.subjects = [...new Set(state.classPlan.map(b => b.subject).filter(Boolean))];
+      }
       state.students.forEach(ensureStudentPlan);
       renderAll();
       maybeRunWeeklyPush();
@@ -359,12 +446,19 @@
 
     function renderAll() {
       renderToolbar();
+      renderSubjects();
       renderClassPlan();
       renderStudents();
       renderStudentSelects();
       renderIndividualPlan();
       renderProgress();
       renderNotifications();
+    }
+
+    function renderSubjects() {
+      const opts = state.subjects.map(s => `<option>${escapeHtml(s)}</option>`).join('');
+      newSubject.innerHTML = opts || '<option value="">Bitte Fachliste erfassen</option>';
+      subjectBadges.innerHTML = state.subjects.map(s => `<span class="badge">${escapeHtml(s)} <button class="small secondary" data-remove-subject="${escapeHtmlAttr(s)}">x</button></span>`).join('') || '<span class="muted">Noch keine Fächer erfasst.</span>';
     }
 
     function renderToolbar() {
@@ -383,7 +477,11 @@
       const rows = state.classPlan.map((b, i) => `
         <tr>
           <td>${i+1}</td>
-          <td><input data-edit="subject" data-id="${b.id}" value="${escapeHtml(b.subject)}"></td>
+          <td>
+            <select data-edit="subject" data-id="${b.id}">
+              ${state.subjects.map(s => `<option ${s===b.subject?'selected':''}>${escapeHtml(s)}</option>`).join('')}
+            </select>
+          </td>
           <td><input data-edit="name" data-id="${b.id}" value="${escapeHtml(b.name)}"></td>
           <td><input data-edit="weeks" data-id="${b.id}" type="number" min="1" max="52" value="${Number(b.expectedWeeks)||1}"></td>
           <td><button class="small secondary" data-remove-block="${b.id}">Entfernen</button></td>
@@ -425,7 +523,7 @@
                 <input type="date" data-plan-date="${block.id}" value="${plan.targetDate || ''}">
               </div>
               <div style="display:flex;gap:6px;margin-top:6px;">
-                <input type="number" min="1" max="52" placeholder="X" data-plan-weeks="${block.id}">
+                <input class="weeks-mini" type="number" min="1" max="52" placeholder="X" data-plan-weeks="${block.id}">
                 <button class="small" data-set-weeks="${block.id}">in X Woche(n)</button>
               </div>
             </td>
@@ -458,6 +556,7 @@
                 <button class="small success" data-save-attempt="${block.id}">Nachweis speichern</button>
               </div>
               <div class="muted">Letzter Nachweis: ${lastAttempt ? `${lastAttempt.date}, ${lastAttempt.percent}% (${lastAttempt.fulfilled ? 'Erfüllt' : 'Nicht erfüllt'})` : 'noch keiner'}</div>
+              <div class="muted">Versuche: ${plan.attempts.length || 0} (bei Misserfolg einfach erneut Nachweis speichern)</div>
             </td>
           </tr>
         `;
@@ -491,6 +590,20 @@
       }
       ensureStudentPlan(student);
 
+      const allApplicable = state.classPlan.filter(block => {
+        const p = state.studentPlans[student][block.id];
+        return p && p.applicable;
+      });
+      const yearShould = allApplicable.filter(block => {
+        const p = state.studentPlans[student][block.id];
+        return p.targetDate && p.targetDate <= todayISO();
+      }).length;
+      const yearDone = allApplicable.filter(block => {
+        const p = state.studentPlans[student][block.id];
+        return p.attempts.length > 0;
+      }).length;
+      const yearPct = yearShould === 0 ? (yearDone > 0 ? 100 : 0) : Math.max(0, Math.min(100, (yearDone / yearShould) * 100));
+
       const subjectMap = {};
       state.classPlan.forEach(block => {
         const plan = state.studentPlans[student][block.id];
@@ -516,17 +629,33 @@
 
         return `
           <div class="progress-card" style="background:${interpolateColor(deltaPct)}">
-            <h4 style="margin:0 0 6px;">${escapeHtml(subject)}</h4>
-            <div>Ø Leistung: <strong>${avg.toFixed(1)}%</strong></div>
-            <div>Erfolgreich / Versuche: <strong>${succeeded}</strong> / ${attempted}</div>
-            <div>Soll erledigt / Ist erledigt: <strong>${shouldHave}</strong> / ${performed}</div>
+            <h4 style="margin:0 0 8px;">${escapeHtml(subject)}</h4>
+            <div class="metric-row">
+              <div class="donut" style="--pct:${Math.max(0, Math.min(100, avg)).toFixed(1)}" data-label="${avg.toFixed(0)}%"></div>
+              <div>
+                <div>Ø Leistung</div>
+                <div><strong>${avg.toFixed(1)}%</strong></div>
+                <div class="muted">Erfolgreich / Versuche: <strong>${succeeded}</strong> / ${attempted}</div>
+              </div>
+            </div>
+            <div style="margin-top:4px;">Soll erledigt / Ist erledigt: <strong>${shouldHave}</strong> / ${performed}</div>
             <div>Planabweichung: <strong>${deltaPct.toFixed(1)}%</strong></div>
             <div class="muted">Überfällig: ${overdue.length ? escapeHtml(overdue.join(', ')) : 'keine'}</div>
           </div>
         `;
       }).join('');
 
-      progressView.innerHTML = cards || '<p class="muted">Für diese/n Schüler/in sind keine relevanten Lernbausteine aktiv.</p>';
+      progressView.innerHTML = `
+        <div class="overall-wrap">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+            <strong>Jahresfortschritt (alle Fächer)</strong>
+            <span class="muted">Soll ${yearShould} / Ist ${yearDone}</span>
+          </div>
+          <div class="overall-bar" style="margin-top:8px;"><span style="width:${yearPct.toFixed(1)}%"></span></div>
+          <div class="muted" style="margin-top:5px;">${yearPct.toFixed(1)}% des Jahresplans erreicht</div>
+        </div>
+        ${cards || '<p class="muted">Für diese/n Schüler/in sind keine relevanten Lernbausteine aktiv.</p>'}
+      `;
     }
 
     function logNotification(message) {
@@ -623,6 +752,7 @@
         teacherName: state.teacherName,
         stufe: state.stufe,
         maxIntensityPercent: state.maxIntensityPercent,
+        subjects: state.subjects,
         classPlan: state.classPlan
       };
       downloadFile('lernbaustein_settings.json', JSON.stringify(settings, null, 2), 'application/json');
@@ -634,6 +764,7 @@
         state.teacherName = s.teacherName || '';
         state.stufe = s.stufe || '';
         state.maxIntensityPercent = Number(s.maxIntensityPercent || 30);
+        state.subjects = Array.isArray(s.subjects) ? s.subjects.filter(Boolean) : [];
         state.classPlan = Array.isArray(s.classPlan) ? s.classPlan.map(b => ({
           id: b.id || uid(),
           subject: b.subject || '',
@@ -708,11 +839,21 @@
         const subject = newSubject.value.trim();
         const name = newBlockName.value.trim();
         const expectedWeeks = Number(newExpectedWeeks.value || 1);
-        if (!subject || !name) return alert('Bitte Fach und Lernbaustein-Name eingeben.');
+        if (!subject || !name) return alert('Bitte Fach aus Liste und Lernbaustein-Name eingeben.');
         state.classPlan.push({ id: uid(), subject, name, expectedWeeks });
         state.students.forEach(ensureStudentPlan);
         newBlockName.value = '';
         renderAll();
+      }
+
+      if (e.target.id === 'addSubjectBtn') {
+        const s = newSubjectName.value.trim();
+        if (!s) return;
+        if (!state.subjects.includes(s)) {
+          state.subjects.push(s);
+          newSubjectName.value = '';
+          renderAll();
+        }
       }
 
       if (e.target.id === 'addStudentBtn') {
@@ -737,6 +878,14 @@
         const s = e.target.dataset.removeStudent;
         state.students = state.students.filter(x => x !== s);
         delete state.studentPlans[s];
+        renderAll();
+      }
+
+      if (e.target.dataset.removeSubject) {
+        const s = e.target.dataset.removeSubject;
+        const used = state.classPlan.some(b => b.subject === s);
+        if (used) return alert('Fach wird in Lernbausteinen verwendet und kann nicht entfernt werden.');
+        state.subjects = state.subjects.filter(x => x !== s);
         renderAll();
       }
 
