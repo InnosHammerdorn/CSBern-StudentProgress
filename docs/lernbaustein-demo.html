@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Escola Lernbaustein Demo</title>
+  <style>
+    :root {
+      --escola-primary: #0f7ebd;
+      --escola-primary-dark: #0a6294;
+      --escola-accent: #12a4a8;
+      --bg: #f3f7fb;
+      --card: #ffffff;
+      --text: #213547;
+      --muted: #6d7c8a;
+      --danger: #d8485f;
+      --success: #2f9f6e;
+      --border: #d8e2ec;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Inter, Arial, sans-serif;
+      color: var(--text);
+      background: linear-gradient(180deg, #eef5fb 0%, #f7fbff 100%);
+    }
+
+    header {
+      background: linear-gradient(90deg, var(--escola-primary) 0%, var(--escola-accent) 100%);
+      color: white;
+      padding: 16px 24px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+    }
+
+    header h1 { margin: 0; font-size: 1.4rem; }
+    header p { margin: 6px 0 0; opacity: 0.95; }
+
+    .container { max-width: 1280px; margin: 20px auto; padding: 0 16px 32px; }
+
+    .toolbar, .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(15, 40, 70, 0.05);
+      padding: 14px;
+      margin-bottom: 14px;
+    }
+
+    .toolbar {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      align-items: end;
+    }
+
+    .tabs { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+    .tab {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--escola-primary-dark);
+    }
+    .tab.active {
+      background: var(--escola-primary);
+      color: white;
+      border-color: var(--escola-primary);
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+
+    label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 4px; }
+    input, select, textarea, button {
+      font: inherit;
+      border-radius: 8px;
+    }
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      padding: 8px 10px;
+      background: white;
+    }
+
+    button {
+      border: none;
+      padding: 9px 12px;
+      color: white;
+      background: var(--escola-primary);
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button.secondary { background: #637b94; }
+    button.success { background: var(--success); }
+    button.warning { background: #e29b23; }
+    button.small { padding: 6px 8px; font-size: 0.82rem; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.92rem;
+      margin-top: 10px;
+    }
+    th, td { border-bottom: 1px solid #e7edf4; padding: 8px; text-align: left; vertical-align: top; }
+    th { color: #35526b; background: #f6fafe; }
+
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .muted { color: var(--muted); font-size: 0.86rem; }
+    .badge {
+      display: inline-block;
+      background: #e8f4fd;
+      color: #125a86;
+      border: 1px solid #cbe6f7;
+      padding: 2px 7px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      margin-right: 4px;
+      margin-top: 3px;
+    }
+
+    .weeks-mini {
+      width: 64px;
+      min-width: 64px;
+      flex: 0 0 64px;
+      text-align: center;
+    }
+
+    .subject-row {
+      display: flex;
+      gap: 8px;
+      align-items: end;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+
+    .overall-wrap {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      background: linear-gradient(180deg, #f8fbff, #eef7ff);
+      margin: 8px 0 14px;
+    }
+
+    .overall-bar {
+      height: 18px;
+      border-radius: 999px;
+      background: #dbe8f4;
+      overflow: hidden;
+      position: relative;
+      border: 1px solid #c6d8e9;
+    }
+
+    .overall-bar > span {
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 0%;
+      background: linear-gradient(90deg, #2c83cd 0%, #17b0a5 45%, #57c56a 100%);
+    }
+
+    .donut {
+      --pct: 0;
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      background: conic-gradient(#12a4a8 calc(var(--pct) * 1%), #e4edf5 0);
+      display: grid;
+      place-items: center;
+      margin-right: 12px;
+      box-shadow: inset 0 0 0 1px #d3e2ef;
+    }
+
+    .donut::before {
+      content: attr(data-label);
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: white;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      color: #0f5074;
+      border: 1px solid #d8e6f2;
+    }
+
+    .metric-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
+    .progress-card {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 10px;
+      transition: background 0.2s;
+    }
+
+    .notif-log {
+      max-height: 200px;
+      overflow: auto;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px;
+      background: #f9fcff;
+      font-size: 0.88rem;
+    }
+
+    @media (max-width: 900px) {
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Lernbaustein-Planer (Demo, Escola-orientiert)</h1>
+    <p>Ohne Escola-Anbindung: lokale Demo mit CSV/Settings Import & Export</p>
+  </header>
+
+  <div class="container">
+    <section class="toolbar">
+      <div>
+        <label for="teacherName">Lehrperson</label>
+        <input id="teacherName" placeholder="z. B. Frau Muster" />
+      </div>
+      <div>
+        <label for="stufe">Stufe / Klasse</label>
+        <input id="stufe" placeholder="z. B. 7. Klasse" />
+      </div>
+      <div>
+        <label for="maxIntensity">Max. Farb-Intensität bei Abweichung (%)</label>
+        <input id="maxIntensity" type="number" min="5" max="100" step="1" />
+      </div>
+      <div class="actions">
+        <button class="success" id="saveAllBtn">Alles speichern</button>
+        <button class="secondary" id="resetDemoBtn">Demo-Daten laden</button>
+      </div>
+    </section>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="jahresplan">Jahresplan Klasse</button>
+      <button class="tab" data-tab="individuell">Individueller Lernplan</button>
+      <button class="tab" data-tab="fortschritt">Fortschritt</button>
+      <button class="tab" data-tab="daten">Daten / Export</button>
+    </div>
+
+    <section id="jahresplan" class="tab-content active panel">
+      <h3>Fächer & Lernbausteine definieren</h3>
+      <p class="muted">Je Eintrag: Fach, Lernbaustein-Name, erwartete Wochen bis Nachweis.</p>
+      <div class="subject-row">
+        <div>
+          <label>Fachliste (separat)</label>
+          <input id="newSubjectName" placeholder="Neues Fach, z. B. Mathematik" />
+        </div>
+        <div class="actions">
+          <button id="addSubjectBtn">+ Fach hinzufügen</button>
+        </div>
+        <div id="subjectBadges"></div>
+      </div>
+      <div class="grid-3">
+        <div>
+          <label>Fach (aus Liste)</label>
+          <select id="newSubject"></select>
+        </div>
+        <div>
+          <label>Lernbaustein</label>
+          <input id="newBlockName" placeholder="Bruchrechnen 1" />
+        </div>
+        <div>
+          <label>Erwartete Wochen</label>
+          <input id="newExpectedWeeks" type="number" min="1" max="52" value="2" />
+        </div>
+      </div>
+      <div class="actions" style="margin-top:8px;">
+        <button id="addBlockBtn">+ Lernbaustein hinzufügen</button>
+      </div>
+      <table id="classPlanTable"></table>
+
+      <hr style="border:none;border-top:1px solid var(--border);margin:16px 0;" />
+      <h3>Schülerliste</h3>
+      <div class="grid-2">
+        <div>
+          <label>Schüler/in hinzufügen</label>
+          <input id="newStudent" placeholder="Vorname Nachname" />
+        </div>
+        <div class="actions" style="align-items:end;">
+          <button id="addStudentBtn">+ Schüler/in hinzufügen</button>
+        </div>
+      </div>
+      <div id="studentBadges"></div>
+    </section>
+
+    <section id="individuell" class="tab-content panel">
+      <h3>Individueller Lernplan</h3>
+      <div class="grid-2">
+        <div>
+          <label>Schüler/in</label>
+          <select id="studentSelect"></select>
+        </div>
+        <div class="muted" style="padding-top:24px;">📅 Datum direkt wählen oder „in X Woche(n)“ setzen.</div>
+      </div>
+      <table id="individualPlanTable"></table>
+    </section>
+
+    <section id="fortschritt" class="tab-content panel">
+      <h3>Fortschritt</h3>
+      <div class="grid-2">
+        <div>
+          <label>Schüler/in</label>
+          <select id="progressStudentSelect"></select>
+        </div>
+        <div class="actions" style="align-items:end;">
+          <button class="warning" id="weeklyPushBtn">Wöchentlichen Push jetzt simulieren</button>
+        </div>
+      </div>
+      <div id="progressView"></div>
+    </section>
+
+    <section id="daten" class="tab-content panel">
+      <h3>Datenexport / Import</h3>
+      <div class="grid-2">
+        <div>
+          <h4>Inhaltsdaten (CSV)</h4>
+          <div class="actions">
+            <button id="exportDataBtn">CSV exportieren</button>
+            <input id="importDataFile" type="file" accept=".csv" />
+            <button class="secondary" id="importDataBtn">CSV laden</button>
+          </div>
+          <p class="muted">Enthält Schülerliste, individuelle Pläne, Nachweise/Versuche.</p>
+        </div>
+        <div>
+          <h4>Klassen-Settings (JSON)</h4>
+          <div class="actions">
+            <button id="exportSettingsBtn">Settings exportieren</button>
+            <input id="importSettingsFile" type="file" accept=".json" />
+            <button class="secondary" id="importSettingsBtn">Settings laden</button>
+          </div>
+          <p class="muted">Enthält Lehrperson, Stufe, Fächer/Lernbausteine, Intensitäts-Schwelle.</p>
+        </div>
+      </div>
+      <h4>Push-/Synchronisations-Log (Demo)</h4>
+      <div id="notificationLog" class="notif-log"></div>
+    </section>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'lernbaustein_demo_state_v1';
+    const state = {
+      teacherName: '',
+      stufe: '',
+      maxIntensityPercent: 30,
+      subjects: [],
+      classPlan: [],
+      students: [],
+      studentPlans: {},
+      notifications: [],
+      lastWeeklyPushISO: null
+    };
+
+    function seededDemoData() {
+      return {
+        teacherName: 'Frau Keller',
+        stufe: '7. Klasse',
+        maxIntensityPercent: 30,
+        subjects: ['Mathematik', 'Deutsch'],
+        classPlan: [
+          { id: uid(), subject: 'Mathematik', name: 'Bruchrechnen 1', expectedWeeks: 2 },
+          { id: uid(), subject: 'Mathematik', name: 'Gleichungen', expectedWeeks: 2 },
+          { id: uid(), subject: 'Deutsch', name: 'Leseverstehen', expectedWeeks: 3 },
+          { id: uid(), subject: 'Deutsch', name: 'Argumentieren', expectedWeeks: 2 }
+        ],
+        students: ['Lina Steiner', 'Noah Graf', 'Mia Keller'],
+        studentPlans: {},
+        notifications: [],
+        lastWeeklyPushISO: null
+      };
+    }
+
+    function uid() {
+      return Math.random().toString(36).slice(2, 10);
+    }
+
+    function todayISO() {
+      return new Date().toISOString().slice(0,10);
+    }
+
+    function addWeeks(dateISO, weeks) {
+      const d = new Date(dateISO + 'T00:00:00');
+      d.setDate(d.getDate() + (Number(weeks) * 7));
+      return d.toISOString().slice(0,10);
+    }
+
+    function ensureStudentPlan(student) {
+      if (!state.studentPlans[student]) state.studentPlans[student] = {};
+      state.classPlan.forEach(block => {
+        if (!state.studentPlans[student][block.id]) {
+          state.studentPlans[student][block.id] = {
+            applicable: true,
+            targetDate: '',
+            attempts: []
+          };
+        }
+      });
+    }
+
+    function getBlockById(id) {
+      return state.classPlan.find(b => b.id === id);
+    }
+
+    function saveState() {
+      persistToolbar();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      logNotification('Daten lokal gespeichert (Demo)');
+      maybeRunWeeklyPush();
+      renderAll();
+    }
+
+    function loadState() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          Object.assign(state, parsed);
+        } catch {
+          Object.assign(state, seededDemoData());
+        }
+      } else {
+        Object.assign(state, seededDemoData());
+      }
+      if (!state.maxIntensityPercent) state.maxIntensityPercent = 30;
+      if (!Array.isArray(state.subjects)) state.subjects = [];
+      if (!state.subjects.length && state.classPlan.length) {
+        state.subjects = [...new Set(state.classPlan.map(b => b.subject).filter(Boolean))];
+      }
+      state.students.forEach(ensureStudentPlan);
+      renderAll();
+      maybeRunWeeklyPush();
+    }
+
+    function renderAll() {
+      renderToolbar();
+      renderSubjects();
+      renderClassPlan();
+      renderStudents();
+      renderStudentSelects();
+      renderIndividualPlan();
+      renderProgress();
+      renderNotifications();
+    }
+
+    function renderSubjects() {
+      const opts = state.subjects.map(s => `<option>${escapeHtml(s)}</option>`).join('');
+      newSubject.innerHTML = opts || '<option value="">Bitte Fachliste erfassen</option>';
+      subjectBadges.innerHTML = state.subjects.map(s => `<span class="badge">${escapeHtml(s)} <button class="small secondary" data-remove-subject="${escapeHtmlAttr(s)}">x</button></span>`).join('') || '<span class="muted">Noch keine Fächer erfasst.</span>';
+    }
+
+    function renderToolbar() {
+      teacherName.value = state.teacherName || '';
+      stufe.value = state.stufe || '';
+      maxIntensity.value = Number(state.maxIntensityPercent || 30);
+    }
+
+    function persistToolbar() {
+      state.teacherName = teacherName.value.trim();
+      state.stufe = stufe.value.trim();
+      state.maxIntensityPercent = Math.max(5, Math.min(100, Number(maxIntensity.value || 30)));
+    }
+
+    function renderClassPlan() {
+      const rows = state.classPlan.map((b, i) => `
+        <tr>
+          <td>${i+1}</td>
+          <td>
+            <select data-edit="subject" data-id="${b.id}">
+              ${state.subjects.map(s => `<option ${s===b.subject?'selected':''}>${escapeHtml(s)}</option>`).join('')}
+            </select>
+          </td>
+          <td><input data-edit="name" data-id="${b.id}" value="${escapeHtml(b.name)}"></td>
+          <td><input data-edit="weeks" data-id="${b.id}" type="number" min="1" max="52" value="${Number(b.expectedWeeks)||1}"></td>
+          <td><button class="small secondary" data-remove-block="${b.id}">Entfernen</button></td>
+        </tr>
+      `).join('');
+      classPlanTable.innerHTML = `
+        <tr><th>#</th><th>Fach</th><th>Lernbaustein</th><th>Erwartete Wochen</th><th></th></tr>
+        ${rows || '<tr><td colspan="5" class="muted">Noch keine Lernbausteine erfasst.</td></tr>'}
+      `;
+    }
+
+    function renderStudents() {
+      studentBadges.innerHTML = state.students.map(s => `<span class="badge">${escapeHtml(s)} <button class="small secondary" data-remove-student="${escapeHtmlAttr(s)}">x</button></span>`).join('') || '<span class="muted">Noch keine Schüler/innen erfasst.</span>';
+    }
+
+    function renderStudentSelects() {
+      const opts = state.students.map(s => `<option>${escapeHtml(s)}</option>`).join('');
+      studentSelect.innerHTML = opts || '<option value="">Keine Schüler/innen</option>';
+      progressStudentSelect.innerHTML = opts || '<option value="">Keine Schüler/innen</option>';
+    }
+
+    function renderIndividualPlan() {
+      const student = studentSelect.value || state.students[0];
+      if (!student) {
+        individualPlanTable.innerHTML = '<tr><td class="muted">Bitte zuerst Schüler/innen und Lernbausteine erfassen.</td></tr>';
+        return;
+      }
+      ensureStudentPlan(student);
+      const rows = state.classPlan.map(block => {
+        const plan = state.studentPlans[student][block.id] || { applicable: true, targetDate: '', attempts: [] };
+        const lastAttempt = plan.attempts[plan.attempts.length-1];
+        return `
+          <tr>
+            <td><strong>${escapeHtml(block.subject)}</strong><br>${escapeHtml(block.name)}</td>
+            <td>
+              <label><input type="checkbox" data-plan-apply="${block.id}" ${plan.applicable ? 'checked' : ''}> relevant</label>
+              <div style="display:flex;gap:6px;align-items:center;">
+                <span title="Kalender">📅</span>
+                <input type="date" data-plan-date="${block.id}" value="${plan.targetDate || ''}">
+              </div>
+              <div style="display:flex;gap:6px;margin-top:6px;">
+                <input class="weeks-mini" type="number" min="1" max="52" placeholder="X" data-plan-weeks="${block.id}">
+                <button class="small" data-set-weeks="${block.id}">in X Woche(n)</button>
+              </div>
+            </td>
+            <td>
+              <div class="grid-2">
+                <div><label>%</label><input type="number" min="0" max="100" data-attempt-pct="${block.id}"></div>
+                <div><label>Datum</label><input type="date" data-attempt-date="${block.id}" value="${todayISO()}"></div>
+              </div>
+              <div class="grid-2" style="margin-top:6px;">
+                <div>
+                  <label>Status</label>
+                  <select data-attempt-status="${block.id}">
+                    <option>Erfüllt</option>
+                    <option>Nicht erfüllt</option>
+                  </select>
+                </div>
+                <div>
+                  <label>Wiederholen</label>
+                  <select data-attempt-repeat="${block.id}">
+                    <option value="nein">Nein</option>
+                    <option value="ja">Ja</option>
+                  </select>
+                </div>
+              </div>
+              <div style="margin-top:6px;">
+                <label>Neues Ziel (bei Wiederholen)</label>
+                <input type="date" data-attempt-repeat-date="${block.id}">
+              </div>
+              <div class="actions" style="margin-top:6px;">
+                <button class="small success" data-save-attempt="${block.id}">Nachweis speichern</button>
+              </div>
+              <div class="muted">Letzter Nachweis: ${lastAttempt ? `${lastAttempt.date}, ${lastAttempt.percent}% (${lastAttempt.fulfilled ? 'Erfüllt' : 'Nicht erfüllt'})` : 'noch keiner'}</div>
+              <div class="muted">Versuche: ${plan.attempts.length || 0} (bei Misserfolg einfach erneut Nachweis speichern)</div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+      individualPlanTable.innerHTML = `
+        <tr><th>Lernbaustein</th><th>Zielplanung</th><th>Lernbaustein-Nachweis</th></tr>
+        ${rows || '<tr><td colspan="3" class="muted">Keine Lernbausteine im Jahresplan.</td></tr>'}
+      `;
+    }
+
+    function interpolateColor(deltaPct) {
+      const threshold = Number(state.maxIntensityPercent || 30);
+      const intensity = Math.min(Math.abs(deltaPct) / threshold, 1);
+      if (deltaPct < 0) {
+        const r = Math.round(255 - (255 - 216) * intensity);
+        const g = Math.round(250 - (250 - 72) * intensity);
+        const b = Math.round(250 - (250 - 95) * intensity);
+        return `rgb(${r},${g},${b})`;
+      }
+      const r = Math.round(246 - (246 - 47) * intensity);
+      const g = Math.round(255 - (255 - 159) * intensity);
+      const b = Math.round(246 - (246 - 110) * intensity);
+      return `rgb(${r},${g},${b})`;
+    }
+
+    function renderProgress() {
+      const student = progressStudentSelect.value || state.students[0];
+      if (!student) {
+        progressView.innerHTML = '<p class="muted">Keine Schüler/innen vorhanden.</p>';
+        return;
+      }
+      ensureStudentPlan(student);
+
+      const allApplicable = state.classPlan.filter(block => {
+        const p = state.studentPlans[student][block.id];
+        return p && p.applicable;
+      });
+      const yearShould = allApplicable.filter(block => {
+        const p = state.studentPlans[student][block.id];
+        return p.targetDate && p.targetDate <= todayISO();
+      }).length;
+      const yearDone = allApplicable.filter(block => {
+        const p = state.studentPlans[student][block.id];
+        return p.attempts.length > 0;
+      }).length;
+      const yearPct = yearShould === 0 ? (yearDone > 0 ? 100 : 0) : Math.max(0, Math.min(100, (yearDone / yearShould) * 100));
+
+      const subjectMap = {};
+      state.classPlan.forEach(block => {
+        const plan = state.studentPlans[student][block.id];
+        if (!plan || !plan.applicable) return;
+        if (!subjectMap[block.subject]) subjectMap[block.subject] = [];
+        subjectMap[block.subject].push({ block, plan });
+      });
+
+      const cards = Object.entries(subjectMap).map(([subject, entries]) => {
+        const attempted = entries.reduce((n, e) => n + e.plan.attempts.length, 0);
+        const succeeded = entries.reduce((n, e) => n + e.plan.attempts.filter(a => a.fulfilled).length, 0);
+        const percents = entries.flatMap(e => e.plan.attempts.map(a => Number(a.percent)));
+        const avg = percents.length ? (percents.reduce((a,b)=>a+b,0) / percents.length) : 0;
+
+        const today = todayISO();
+        const shouldHave = entries.filter(e => e.plan.targetDate && e.plan.targetDate <= today).length;
+        const performed = entries.filter(e => e.plan.attempts.length > 0).length;
+        const deltaPct = shouldHave === 0 ? (performed > 0 ? 100 : 0) : ((performed - shouldHave) / shouldHave) * 100;
+
+        const overdue = entries
+          .filter(e => e.plan.targetDate && e.plan.targetDate < today && e.plan.attempts.length === 0)
+          .map(e => e.block.name);
+
+        return `
+          <div class="progress-card" style="background:${interpolateColor(deltaPct)}">
+            <h4 style="margin:0 0 8px;">${escapeHtml(subject)}</h4>
+            <div class="metric-row">
+              <div class="donut" style="--pct:${Math.max(0, Math.min(100, avg)).toFixed(1)}" data-label="${avg.toFixed(0)}%"></div>
+              <div>
+                <div>Ø Leistung</div>
+                <div><strong>${avg.toFixed(1)}%</strong></div>
+                <div class="muted">Erfolgreich / Versuche: <strong>${succeeded}</strong> / ${attempted}</div>
+              </div>
+            </div>
+            <div style="margin-top:4px;">Soll erledigt / Ist erledigt: <strong>${shouldHave}</strong> / ${performed}</div>
+            <div>Planabweichung: <strong>${deltaPct.toFixed(1)}%</strong></div>
+            <div class="muted">Überfällig: ${overdue.length ? escapeHtml(overdue.join(', ')) : 'keine'}</div>
+          </div>
+        `;
+      }).join('');
+
+      progressView.innerHTML = `
+        <div class="overall-wrap">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+            <strong>Jahresfortschritt (alle Fächer)</strong>
+            <span class="muted">Soll ${yearShould} / Ist ${yearDone}</span>
+          </div>
+          <div class="overall-bar" style="margin-top:8px;"><span style="width:${yearPct.toFixed(1)}%"></span></div>
+          <div class="muted" style="margin-top:5px;">${yearPct.toFixed(1)}% des Jahresplans erreicht</div>
+        </div>
+        ${cards || '<p class="muted">Für diese/n Schüler/in sind keine relevanten Lernbausteine aktiv.</p>'}
+      `;
+    }
+
+    function logNotification(message) {
+      state.notifications.unshift({ ts: new Date().toISOString(), message });
+      state.notifications = state.notifications.slice(0, 200);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      renderNotifications();
+    }
+
+    function renderNotifications() {
+      notificationLog.innerHTML = state.notifications.length
+        ? state.notifications.map(n => `<div><strong>${new Date(n.ts).toLocaleString('de-CH')}</strong> – ${escapeHtml(n.message)}</div>`).join('')
+        : '<div class="muted">Noch keine Push-/Sync-Ereignisse.</div>';
+    }
+
+    function maybeRunWeeklyPush(force = false) {
+      const now = new Date();
+      const last = state.lastWeeklyPushISO ? new Date(state.lastWeeklyPushISO) : null;
+      const elapsedDays = last ? (now - last) / (1000*60*60*24) : Infinity;
+      if (force || elapsedDays >= 7) {
+        state.lastWeeklyPushISO = now.toISOString();
+        logNotification('Automatischer Wochen-Push an Eltern (Escola-Sync simuliert).');
+      }
+    }
+
+    function exportDataCSV() {
+      const lines = [[
+        'rowType','teacherName','stufe','student','subject','blockName','blockId','applicable','targetDate','attemptDate','percent','fulfilled','repeat','repeatDate'
+      ]];
+
+      state.students.forEach(student => {
+        lines.push(['student', state.teacherName, state.stufe, student, '', '', '', '', '', '', '', '', '', '']);
+        ensureStudentPlan(student);
+        Object.entries(state.studentPlans[student]).forEach(([blockId, plan]) => {
+          const block = getBlockById(blockId) || { subject: '', name: '' };
+          if (!plan.attempts.length) {
+            lines.push(['plan', state.teacherName, state.stufe, student, block.subject, block.name, blockId, plan.applicable, plan.targetDate, '', '', '', '', '']);
+          } else {
+            plan.attempts.forEach(a => lines.push([
+              'attempt', state.teacherName, state.stufe, student, block.subject, block.name, blockId,
+              plan.applicable, plan.targetDate, a.date, a.percent, a.fulfilled, a.repeat, a.repeatDate || ''
+            ]));
+          }
+        });
+      });
+
+      downloadFile('lernbaustein_inhalt.csv', lines.map(r => r.map(csvEscape).join(',')).join('\n'), 'text/csv');
+    }
+
+    function importDataCSV(text) {
+      const rows = parseCSV(text);
+      if (rows.length < 2) return alert('Ungültige CSV-Datei.');
+      const header = rows[0];
+      const idx = Object.fromEntries(header.map((h,i) => [h, i]));
+
+      const students = new Set(state.students);
+      const newStudentPlans = JSON.parse(JSON.stringify(state.studentPlans || {}));
+
+      rows.slice(1).forEach(r => {
+        const student = (r[idx.student] || '').trim();
+        if (!student) return;
+        students.add(student);
+        if (!newStudentPlans[student]) newStudentPlans[student] = {};
+
+        const blockId = (r[idx.blockId] || '').trim();
+        if (!blockId) return;
+        if (!newStudentPlans[student][blockId]) {
+          newStudentPlans[student][blockId] = { applicable: true, targetDate: '', attempts: [] };
+        }
+
+        const plan = newStudentPlans[student][blockId];
+        if ((r[idx.applicable] || '') !== '') plan.applicable = String(r[idx.applicable]) === 'true';
+        if (r[idx.targetDate]) plan.targetDate = r[idx.targetDate];
+
+        if (r[idx.rowType] === 'attempt' && r[idx.attemptDate]) {
+          plan.attempts.push({
+            date: r[idx.attemptDate],
+            percent: Number(r[idx.percent] || 0),
+            fulfilled: String(r[idx.fulfilled]) === 'true',
+            repeat: String(r[idx.repeat]) === 'true',
+            repeatDate: r[idx.repeatDate] || ''
+          });
+        }
+      });
+
+      state.students = [...students];
+      state.studentPlans = newStudentPlans;
+      logNotification('Inhaltsdaten aus CSV importiert (Demo).');
+      renderAll();
+    }
+
+    function exportSettings() {
+      const settings = {
+        teacherName: state.teacherName,
+        stufe: state.stufe,
+        maxIntensityPercent: state.maxIntensityPercent,
+        subjects: state.subjects,
+        classPlan: state.classPlan
+      };
+      downloadFile('lernbaustein_settings.json', JSON.stringify(settings, null, 2), 'application/json');
+    }
+
+    function importSettings(text) {
+      try {
+        const s = JSON.parse(text);
+        state.teacherName = s.teacherName || '';
+        state.stufe = s.stufe || '';
+        state.maxIntensityPercent = Number(s.maxIntensityPercent || 30);
+        state.subjects = Array.isArray(s.subjects) ? s.subjects.filter(Boolean) : [];
+        state.classPlan = Array.isArray(s.classPlan) ? s.classPlan.map(b => ({
+          id: b.id || uid(),
+          subject: b.subject || '',
+          name: b.name || '',
+          expectedWeeks: Number(b.expectedWeeks || 1)
+        })) : [];
+        state.students.forEach(ensureStudentPlan);
+        logNotification('Settings importiert (Demo).');
+        renderAll();
+      } catch {
+        alert('Ungültige Settings-Datei.');
+      }
+    }
+
+    function downloadFile(name, content, type) {
+      const blob = new Blob([content], { type });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = name;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    function csvEscape(v) {
+      const s = String(v ?? '');
+      if (s.includes(',') || s.includes('"') || s.includes('\n')) return '"' + s.replaceAll('"', '""') + '"';
+      return s;
+    }
+
+    function parseCSV(text) {
+      const rows = [];
+      let i = 0, field = '', row = [], inQuotes = false;
+      while (i < text.length) {
+        const c = text[i];
+        if (inQuotes) {
+          if (c === '"' && text[i+1] === '"') { field += '"'; i += 2; continue; }
+          if (c === '"') { inQuotes = false; i++; continue; }
+          field += c;
+          i++;
+          continue;
+        }
+        if (c === '"') { inQuotes = true; i++; continue; }
+        if (c === ',') { row.push(field); field = ''; i++; continue; }
+        if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; i++; continue; }
+        if (c === '\r') { i++; continue; }
+        field += c; i++;
+      }
+      row.push(field);
+      rows.push(row);
+      return rows;
+    }
+
+    function escapeHtml(s) {
+      return String(s ?? '').replace(/[&<>"']/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]));
+    }
+
+    function escapeHtmlAttr(s) {
+      return escapeHtml(s).replaceAll('"', '&quot;');
+    }
+
+    document.addEventListener('click', (e) => {
+      const tab = e.target.closest('.tab');
+      if (tab) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.tab).classList.add('active');
+      }
+
+      if (e.target.id === 'addBlockBtn') {
+        persistToolbar();
+        const subject = newSubject.value.trim();
+        const name = newBlockName.value.trim();
+        const expectedWeeks = Number(newExpectedWeeks.value || 1);
+        if (!subject || !name) return alert('Bitte Fach aus Liste und Lernbaustein-Name eingeben.');
+        state.classPlan.push({ id: uid(), subject, name, expectedWeeks });
+        state.students.forEach(ensureStudentPlan);
+        newBlockName.value = '';
+        renderAll();
+      }
+
+      if (e.target.id === 'addSubjectBtn') {
+        const s = newSubjectName.value.trim();
+        if (!s) return;
+        if (!state.subjects.includes(s)) {
+          state.subjects.push(s);
+          newSubjectName.value = '';
+          renderAll();
+        }
+      }
+
+      if (e.target.id === 'addStudentBtn') {
+        const s = newStudent.value.trim();
+        if (!s) return;
+        if (!state.students.includes(s)) {
+          state.students.push(s);
+          ensureStudentPlan(s);
+          newStudent.value = '';
+          renderAll();
+        }
+      }
+
+      if (e.target.dataset.removeBlock) {
+        const id = e.target.dataset.removeBlock;
+        state.classPlan = state.classPlan.filter(b => b.id !== id);
+        Object.values(state.studentPlans).forEach(p => delete p[id]);
+        renderAll();
+      }
+
+      if (e.target.dataset.removeStudent) {
+        const s = e.target.dataset.removeStudent;
+        state.students = state.students.filter(x => x !== s);
+        delete state.studentPlans[s];
+        renderAll();
+      }
+
+      if (e.target.dataset.removeSubject) {
+        const s = e.target.dataset.removeSubject;
+        const used = state.classPlan.some(b => b.subject === s);
+        if (used) return alert('Fach wird in Lernbausteinen verwendet und kann nicht entfernt werden.');
+        state.subjects = state.subjects.filter(x => x !== s);
+        renderAll();
+      }
+
+      if (e.target.dataset.setWeeks) {
+        const student = studentSelect.value;
+        const id = e.target.dataset.setWeeks;
+        const weeksInput = document.querySelector(`[data-plan-weeks="${id}"]`);
+        const weeks = Number(weeksInput.value || 0);
+        if (!student || !weeks) return;
+        ensureStudentPlan(student);
+        state.studentPlans[student][id].targetDate = addWeeks(todayISO(), weeks);
+        renderAll();
+      }
+
+      if (e.target.dataset.saveAttempt) {
+        const student = studentSelect.value;
+        const id = e.target.dataset.saveAttempt;
+        if (!student) return;
+        ensureStudentPlan(student);
+        const pct = Number(document.querySelector(`[data-attempt-pct="${id}"]`).value || 0);
+        const date = document.querySelector(`[data-attempt-date="${id}"]`).value || todayISO();
+        const status = document.querySelector(`[data-attempt-status="${id}"]`).value;
+        const repeat = document.querySelector(`[data-attempt-repeat="${id}"]`).value === 'ja';
+        const repeatDate = document.querySelector(`[data-attempt-repeat-date="${id}"]`).value || '';
+
+        state.studentPlans[student][id].attempts.push({
+          date,
+          percent: pct,
+          fulfilled: status === 'Erfüllt',
+          repeat,
+          repeatDate
+        });
+
+        if (repeat && repeatDate) {
+          state.studentPlans[student][id].targetDate = repeatDate;
+        }
+
+        logNotification(`Ereignis-Push simuliert: Nachweis für ${student} erfasst.`);
+        renderAll();
+      }
+
+      if (e.target.id === 'saveAllBtn') saveState();
+      if (e.target.id === 'resetDemoBtn') {
+        Object.assign(state, seededDemoData());
+        state.students.forEach(ensureStudentPlan);
+        logNotification('Demo-Daten geladen.');
+        renderAll();
+      }
+
+      if (e.target.id === 'weeklyPushBtn') {
+        maybeRunWeeklyPush(true);
+      }
+
+      if (e.target.id === 'exportDataBtn') exportDataCSV();
+      if (e.target.id === 'importDataBtn') {
+        const f = importDataFile.files[0];
+        if (!f) return alert('Bitte CSV-Datei auswählen.');
+        f.text().then(importDataCSV);
+      }
+
+      if (e.target.id === 'exportSettingsBtn') exportSettings();
+      if (e.target.id === 'importSettingsBtn') {
+        const f = importSettingsFile.files[0];
+        if (!f) return alert('Bitte JSON-Datei auswählen.');
+        f.text().then(importSettings);
+      }
+    });
+
+    document.addEventListener('change', (e) => {
+      const student = studentSelect.value;
+      if (e.target.id === 'studentSelect' || e.target.id === 'progressStudentSelect') {
+        renderIndividualPlan();
+        renderProgress();
+      }
+
+      if (e.target.dataset.edit) {
+        const id = e.target.dataset.id;
+        const block = getBlockById(id);
+        if (!block) return;
+        if (e.target.dataset.edit === 'subject') block.subject = e.target.value;
+        if (e.target.dataset.edit === 'name') block.name = e.target.value;
+        if (e.target.dataset.edit === 'weeks') block.expectedWeeks = Number(e.target.value || 1);
+      }
+
+      if (e.target.dataset.planApply && student) {
+        ensureStudentPlan(student);
+        state.studentPlans[student][e.target.dataset.planApply].applicable = e.target.checked;
+      }
+
+      if (e.target.dataset.planDate && student) {
+        ensureStudentPlan(student);
+        state.studentPlans[student][e.target.dataset.planDate].targetDate = e.target.value;
+      }
+
+      if (['teacherName','stufe','maxIntensity'].includes(e.target.id)) {
+        persistToolbar();
+      }
+
+      renderProgress();
+    });
+
+    loadState();
+  </script>
+</body>
+</html>
