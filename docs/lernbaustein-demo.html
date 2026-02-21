@@ -218,6 +218,16 @@
     .lb-title { font-weight:700; color:#1b4f73; }
     .lb-tools { display:flex; align-items:center; gap:6px; }
     .lb-body.compact { margin-top:6px; }
+    .lb-line {
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+      font-size:.88rem;
+    }
+    .lb-line input[type="number"] { width:70px; }
+    .lb-line input[type="date"] { width:140px; }
+    .lb-line select { width:auto; min-width:120px; }
 
     .switch {
       position: relative;
@@ -256,14 +266,24 @@
       position:absolute; inset:0 auto 0 0; width:0%; border-radius:999px;
       background: #a7d7a8;
     }
-    .track-now {
-      position:absolute; top:-5px; width:2px; height:24px; background:#2d4f66;
+    .track-today-dot {
+      position:absolute;
+      top:50%;
+      width:12px;
+      height:12px;
+      border-radius:50%;
+      background:#18384d;
+      border:2px solid white;
+      transform: translate(-50%, -50%);
+      box-shadow:0 0 0 1px #17384d;
+      z-index:2;
     }
-    .track-gap {
-      position:absolute; top:-3px; height:22px; border:2px solid transparent; border-radius:999px;
-      pointer-events:none;
+    .track-seg {
+      position:absolute;
+      top:0;
+      height:100%;
+      border-radius:999px;
     }
-
     .progress-card {
       border: 1px solid var(--border);
       border-radius: 10px;
@@ -681,30 +701,20 @@
             </div>
             ${collapsed ? '<div class="muted" style="margin-top:6px;">Deaktiviert. Details eingeklappt.</div>' : `
             <div class="lb-body compact">
-              <div class="date-inline">
+              <div class="lb-line">
                 <span title="Kalender">📅</span>
                 <input type="date" data-plan-date="${block.id}" value="${plan.targetDate || ''}">
                 <input class="weeks-mini" type="number" min="1" max="52" placeholder="X" data-plan-weeks="${block.id}">
-                <button class="small" data-set-weeks="${block.id}">in X Woche(n)</button>
-              </div>
-              <div class="grid-2" style="margin-top:6px;">
-                <div><label>%</label><input type="number" min="0" max="100" data-attempt-pct="${block.id}"></div>
-                <div class="date-inline"><label>Datum</label><input type="date" data-attempt-date="${block.id}" value="${todayISO()}"></div>
-              </div>
-              <div class="grid-2" style="margin-top:4px;">
-                <div><label>Status</label><select data-attempt-status="${block.id}"><option>Erfüllt</option><option>Nicht erfüllt</option></select></div>
-                <div>
-                  <label>Wiederholen</label>
-                  <select data-attempt-repeat="${block.id}"><option value="nein">Nein</option><option value="ja">Ja</option></select>
-                </div>
-              </div>
-              <div class="date-inline" style="margin-top:4px;">
-                <label>Neues Ziel</label>
+                <button class="small" data-set-weeks="${block.id}">+XW</button>
+                <input type="number" min="0" max="100" placeholder="%" data-attempt-pct="${block.id}">
+                <input type="date" data-attempt-date="${block.id}" value="${todayISO()}">
+                <select data-attempt-status="${block.id}"><option>Erfüllt</option><option>Nicht erfüllt</option></select>
+                <select data-attempt-repeat="${block.id}"><option value="nein">Wdh: Nein</option><option value="ja">Wdh: Ja</option></select>
                 <input type="date" data-attempt-repeat-date="${block.id}">
                 <input class="weeks-mini" type="number" min="1" max="52" placeholder="X" data-repeat-weeks="${block.id}">
-                <button class="small" data-set-repeat-weeks="${block.id}">in X Woche(n)</button>
+                <button class="small" data-set-repeat-weeks="${block.id}">Wdh +XW</button>
+                <button class="small success" data-save-attempt="${block.id}">Nachweis speichern</button>
               </div>
-              <div class="actions" style="margin-top:6px;"><button class="small success" data-save-attempt="${block.id}">Nachweis speichern</button></div>
               <div class="muted">Aktiver Nachweis: ${selectedAttempt ? `${selectedAttempt.date}, ${selectedAttempt.percent}% (${selectedAttempt.fulfilled ? 'Erfüllt' : 'Nicht erfüllt'})` : 'noch keiner'}</div>
               <div class="attempt-list">${attemptItems}</div>
             </div>`}
@@ -770,10 +780,19 @@
           const yearEnd = new Date(d.getFullYear(), 11, 31);
           return Math.max(0, Math.min(100, ((d - yearStart) / (yearEnd - yearStart)) * 100));
         })();
-        const donePctYear = Math.max(0, Math.min(100, entries.length ? (performed / entries.length) * 100 : 0));
-        const gapLeft = Math.min(donePctYear, nowPos);
-        const gapWidth = Math.max(0, Math.abs(nowPos - donePctYear));
-        const gapColor = donePctYear < nowPos ? '#d9534f' : '#2f9f6e';
+        const totalWeeks = Math.max(1, entries.reduce((s, e) => s + Number(e.block.expectedWeeks || 1), 0));
+        const completedWeeks = entries
+          .filter(e => e.plan.attempts.length > 0)
+          .reduce((s, e) => s + Number(e.block.expectedWeeks || 1), 0);
+        const donePctYear = Math.max(0, Math.min(100, (completedWeeks / totalWeeks) * 100));
+        const lagging = donePctYear < nowPos;
+
+        const timelineSegments = lagging
+          ? `
+            <div class="track-seg" style="left:0;width:${donePctYear.toFixed(1)}%;background:#4f5e69"></div>
+            <div class="track-seg" style="left:${donePctYear.toFixed(1)}%;width:${(nowPos-donePctYear).toFixed(1)}%;background:#e58b8b"></div>
+          `
+          : `<div class="track-seg" style="left:0;width:${donePctYear.toFixed(1)}%;background:#59b774"></div>`;
 
         return `
           <div class="progress-card">
@@ -790,11 +809,10 @@
             <div>Planabweichung: <strong>${deltaPct.toFixed(1)}%</strong></div>
             <div class="year-track">
               <div class="track">
-                <div class="track-fill" style="width:${donePctYear.toFixed(1)}%; background:${avgColor};"></div>
-                <div class="track-now" style="left:${nowPos.toFixed(1)}%"></div>
-                <div class="track-gap" style="left:${gapLeft.toFixed(1)}%; width:${gapWidth.toFixed(1)}%; border-color:${gapColor}"></div>
+                ${timelineSegments}
+                <div class="track-today-dot" style="left:${nowPos.toFixed(1)}%"></div>
               </div>
-              <div class="muted">Jahr: Leistungslinie bis ${donePctYear.toFixed(1)}%, Heute bei ${nowPos.toFixed(1)}%</div>
+              <div class="muted">Jahr (wochenbasiert): erledigt ${donePctYear.toFixed(1)}%, heute ${nowPos.toFixed(1)}%</div>
             </div>
             <div class="muted">Überfällig: ${overdue.length ? escapeHtml(overdue.join(', ')) : 'keine'}</div>
           </div>
