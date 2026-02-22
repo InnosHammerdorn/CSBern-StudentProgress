@@ -846,14 +846,10 @@
       const score = Math.max(0, Math.min(100, Number(avg || 0)));
       if (score < 60) {
         const t = score / 60;
-        const sat = Math.round(72 + (1 - t) * 14);
-        const light = Math.round(44 + t * 8);
-        return `hsl(355, ${sat}%, ${light}%)`;
+        return `hsl(355, ${Math.round(86 - t * 14)}%, ${Math.round(42 + t * 8)}%)`;
       }
       const t = (score - 60) / 40;
-      const sat = Math.round(22 + t * 56);
-      const light = Math.round(46 - t * 8);
-      return `hsl(132, ${sat}%, ${light}%)`;
+      return `hsl(132, ${Math.round(28 + t * 52)}%, ${Math.round(46 - t * 8)}%)`;
     }
 
     function saveState() {
@@ -1077,10 +1073,11 @@
 
         const avgColor = progressColorByAvg(avg);
         const sortedEntries = [...entries].sort((a, b) => {
-          if (!a.plan.targetDate && !b.plan.targetDate) return 0;
-          if (!a.plan.targetDate) return 1;
-          if (!b.plan.targetDate) return -1;
-          return a.plan.targetDate.localeCompare(b.plan.targetDate);
+          const aSel = getSelectedAttempt(a.plan);
+          const bSel = getSelectedAttempt(b.plan);
+          const aKey = (aSel && aSel.date) ? aSel.date : (a.plan.targetDate || '9999-12-31');
+          const bKey = (bSel && bSel.date) ? bSel.date : (b.plan.targetDate || '9999-12-31');
+          return aKey.localeCompare(bKey);
         });
         const expectedUpToToday = sortedEntries.filter(e => e.plan.targetDate && e.plan.targetDate <= today).length;
         const achievedUpToToday = sortedEntries.filter(e => {
@@ -1120,7 +1117,10 @@
           const a = getSelectedAttempt(e.plan);
           return a && a.fulfilled && Number(a.percent) >= 60;
         });
-        const lastSuccessfulDate = lastSuccessful ? new Date((lastSuccessful.plan.targetDate || today) + 'T00:00:00') : timelineStartDate;
+        const lastSuccessfulAttempt = lastSuccessful ? getSelectedAttempt(lastSuccessful.plan) : null;
+        const lastSuccessfulDate = lastSuccessfulAttempt
+          ? new Date((lastSuccessfulAttempt.date || today) + 'T00:00:00')
+          : timelineStartDate;
         const lastSuccessfulPct = Math.max(0, Math.min(100, ((lastSuccessfulDate - timelineStartDate) / (timelineEndDate - timelineStartDate)) * 100));
         const progressWidthPct = lastSuccessful ? lastSuccessfulPct : 0;
 
