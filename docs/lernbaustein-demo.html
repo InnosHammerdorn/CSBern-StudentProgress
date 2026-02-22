@@ -544,6 +544,33 @@
         'Final performance task: mini debate and reflection'
       ];
 
+      const mathNames = [
+        'Zahlenmengen und Zahlengerade sicher anwenden',
+        'Grundoperationen mit ganzen Zahlen festigen',
+        'Brüche erweitern, kürzen und vergleichen',
+        'Brüche addieren und subtrahieren',
+        'Brüche multiplizieren und dividieren',
+        'Dezimalzahlen und Brüche umwandeln',
+        'Prozentbegriff und Grundwert berechnen',
+        'Prozent-, Rabatt- und Zinsaufgaben lösen',
+        'Terme vereinfachen und ausmultiplizieren',
+        'Lineare Gleichungen mit einer Variablen lösen',
+        'Textaufgaben in Gleichungen übersetzen',
+        'Koordinatensystem: Punkte und Geraden eintragen',
+        'Steigung und Achsenabschnitt verstehen',
+        'Proportionale und antiproportionale Zuordnungen',
+        'Dreiecke konstruieren und Eigenschaften benennen',
+        'Vierecke klassifizieren und begründen',
+        'Umfang und Flächeninhalt von Rechtecken',
+        'Flächeninhalt von Dreiecken und Parallelogrammen',
+        'Kreis: Umfang und Fläche berechnen',
+        'Volumen von Quadern und Würfeln',
+        'Daten erheben und in Tabellen darstellen',
+        'Diagramme lesen, erstellen und interpretieren',
+        'Mittelwert, Median und Spannweite bestimmen',
+        'Prüfungstraining Mathematik mit gemischten Aufgaben'
+      ];
+
       function buildBlocks(subject, names) {
         return names.map((name, idx) => ({
           id: uid(),
@@ -559,11 +586,12 @@
 
       const germanBlocks = buildBlocks('Deutsch', germanNames);
       const englishBlocks = buildBlocks('Englisch', englishNames);
-      const classPlan = [...germanBlocks, ...englishBlocks];
+      const mathBlocks = buildBlocks('Mathematik', mathNames);
+      const classPlan = [...germanBlocks, ...englishBlocks, ...mathBlocks];
 
       function dateByIndex(idx) {
         const base = new Date('2025-08-18T00:00:00');
-        base.setDate(base.getDate() + (idx * 14));
+        base.setDate(base.getDate() + (idx * 7));
         return base.toISOString().slice(0, 10);
       }
 
@@ -572,9 +600,10 @@
         classPlan.forEach((block, idx) => {
           const targetDate = dateByIndex(idx);
           const doneCount = profile.doneBySubject[block.subject] || 0;
-          const isDone = idx % 24 < doneCount;
+          const subjectIndex = idx % 24;
+          const isDone = subjectIndex < doneCount;
           const percentBase = profile.baseBySubject[block.subject] || 60;
-          const variance = ((idx % 5) - 2) * profile.variance;
+          const variance = ((subjectIndex % 5) - 2) * profile.variance;
           const percent = Math.max(35, Math.min(98, Math.round(percentBase + variance)));
           const attemptDate = new Date(targetDate + 'T00:00:00');
           attemptDate.setDate(attemptDate.getDate() + profile.dateOffsetDays);
@@ -599,20 +628,20 @@
       const students = ['Lina Steiner', 'Noah Graf', 'Mia Keller'];
       const studentPlans = {
         'Lina Steiner': createStudentPlan({
-          doneBySubject: { Deutsch: 11, Englisch: 9 },
-          baseBySubject: { Deutsch: 66, Englisch: 62 },
+          doneBySubject: { Deutsch: 20, Englisch: 18, Mathematik: 19 },
+          baseBySubject: { Deutsch: 66, Englisch: 62, Mathematik: 64 },
           variance: 5,
           dateOffsetDays: 4
         }),
         'Noah Graf': createStudentPlan({
-          doneBySubject: { Deutsch: 7, Englisch: 6 },
-          baseBySubject: { Deutsch: 54, Englisch: 50 },
+          doneBySubject: { Deutsch: 15, Englisch: 13, Mathematik: 14 },
+          baseBySubject: { Deutsch: 54, Englisch: 50, Mathematik: 56 },
           variance: 6,
           dateOffsetDays: 11
         }),
         'Mia Keller': createStudentPlan({
-          doneBySubject: { Deutsch: 16, Englisch: 15 },
-          baseBySubject: { Deutsch: 90, Englisch: 87 },
+          doneBySubject: { Deutsch: 24, Englisch: 24, Mathematik: 24 },
+          baseBySubject: { Deutsch: 90, Englisch: 87, Mathematik: 91 },
           variance: 4,
           dateOffsetDays: -3
         })
@@ -622,7 +651,7 @@
         teacherName: 'Frau Keller',
         stufe: '7. Klasse (Schuljahr 2025/26)',
         maxIntensityPercent: 30,
-        subjects: ['Deutsch', 'Englisch'],
+        subjects: ['Deutsch', 'Englisch', 'Mathematik'],
         classPlanSubjectFilter: 'ALL',
         classPlan,
         students,
