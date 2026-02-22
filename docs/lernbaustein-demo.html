@@ -160,7 +160,18 @@
       position: absolute;
       inset: 0 auto 0 0;
       width: 0%;
-      background: linear-gradient(90deg, #2c83cd 0%, #17b0a5 45%, #57c56a 100%);
+      background: #2f9f6e;
+    }
+    .overall-target-dot {
+      position:absolute;
+      top:50%;
+      width:14px;
+      height:14px;
+      border-radius:50%;
+      background:#0f7ebd;
+      border:2px solid #fff;
+      transform:translate(-50%,-50%);
+      box-shadow:0 0 0 1px #0f7ebd;
     }
 
     .donut {
@@ -256,6 +267,14 @@
       flex-wrap: nowrap;
       overflow-x: auto;
     }
+    .block-create-box {
+      border: 2px solid #b9d4e8;
+      border-radius: 10px;
+      padding: 10px;
+      background: #f7fbff;
+      margin-top: 8px;
+    }
+    .lb-card.inactive { opacity: .55; filter: grayscale(.25); }
     .lb-card.repeat-child {
       border-left: 3px solid #5f8fb2;
       background: #f8fbff;
@@ -432,32 +451,34 @@
         </div>
         <div id="subjectBadges"></div>
       </div>
-      <div class="grid-3">
-        <div>
-          <label>Fach (aus Liste)</label>
-          <select id="newSubject"></select>
+      <div class="block-create-box">
+        <div class="grid-3">
+          <div>
+            <label>Fach (aus Liste)</label>
+            <select id="newSubject"></select>
+          </div>
+          <div>
+            <label>Lernbaustein</label>
+            <input id="newBlockName" placeholder="Bruchrechnen 1" />
+          </div>
+          <div>
+            <label>Erwartete Wochen</label>
+            <input id="newExpectedWeeks" type="number" min="1" max="52" value="2" />
+          </div>
         </div>
-        <div>
-          <label>Lernbaustein</label>
-          <input id="newBlockName" placeholder="Bruchrechnen 1" />
+        <div class="grid-2" style="margin-top:8px;">
+          <div>
+            <label>Vorheriger Lernbaustein (optional)</label>
+            <select id="newPreviousBlock"></select>
+          </div>
+          <div>
+            <label>Filter: nur Fach anzeigen</label>
+            <select id="classPlanFilterSubject"></select>
+          </div>
         </div>
-        <div>
-          <label>Erwartete Wochen</label>
-          <input id="newExpectedWeeks" type="number" min="1" max="52" value="2" />
+        <div class="actions" style="margin-top:8px;">
+          <button id="addBlockBtn">+ Lernbaustein hinzufügen</button>
         </div>
-      </div>
-      <div class="grid-2" style="margin-top:8px;">
-        <div>
-          <label>Vorheriger Lernbaustein (optional)</label>
-          <select id="newPreviousBlock"></select>
-        </div>
-        <div>
-          <label>Filter: nur Fach anzeigen</label>
-          <select id="classPlanFilterSubject"></select>
-        </div>
-      </div>
-      <div class="actions" style="margin-top:8px;">
-        <button id="addBlockBtn">+ Lernbaustein hinzufügen</button>
       </div>
       <table id="classPlanTable"></table>
 
@@ -955,20 +976,24 @@
 
         variants.forEach(v => {
           const selectedAttempt = getSelectedAttempt(v.plan);
+          const hasAttempt = !!selectedAttempt;
+          const disabled = hasAttempt ? 'disabled' : '';
           cards.push(`
-            <div class="lb-card ${v.isDuplicate ? 'repeat-child' : ''}">
+            <div class="lb-card ${v.isDuplicate ? 'repeat-child' : ''} ${v.plan.applicable ? '' : 'inactive'}">
               <div class="lb-line">
+                <label class="switch" title="Aktiv/Inaktiv"><input type="checkbox" data-plan-apply="${v.key}" ${v.plan.applicable ? 'checked' : ''}><span class="slider"></span></label>
                 <span class="lb-title">${escapeHtml(block.name)}</span>
                 ${v.isDuplicate ? '<span class="repeat-chip">↻ Wiederholung</span>' : ''}
                 <span title="Kalender">🗓</span>
-                <input type="date" data-plan-date="${v.key}" value="${v.plan.targetDate || ''}">
-                <input class="weeks-mini" type="number" min="1" max="52" placeholder="X" data-plan-weeks="${v.key}">
-                <button class="small" data-set-weeks="${v.key}">+XW</button>
-                <input type="number" min="0" max="100" placeholder="%" data-attempt-pct="${v.key}">
-                <input type="date" data-attempt-date="${v.key}" value="${todayISO()}">
-                <select data-attempt-status="${v.key}"><option>Erfüllt</option><option>Nicht erfüllt</option></select>
-                <button class="small success" data-save-attempt="${v.key}">Nachweis speichern</button>
-                <button class="small secondary" data-duplicate-block="${makePlanKey(block.id, v.isDuplicate ? v.plan.instanceId : 'base')}">Duplizieren</button>
+                <input type="date" data-plan-date="${v.key}" value="${v.plan.targetDate || ''}" ${disabled}>
+                <input class="weeks-mini" type="number" min="1" max="52" placeholder="X" data-plan-weeks="${v.key}" ${disabled}>
+                <button class="small" data-set-weeks="${v.key}" ${disabled}>+XW</button>
+                <input type="number" min="0" max="100" placeholder="%" data-attempt-pct="${v.key}" ${disabled}>
+                <input type="date" data-attempt-date="${v.key}" value="${todayISO()}" ${disabled}>
+                <select data-attempt-status="${v.key}" ${disabled}><option>Erfüllt</option><option>Nicht erfüllt</option></select>
+                <button class="small success" data-save-attempt="${v.key}" ${disabled}>Nachweis speichern</button>
+                <button class="small secondary" data-duplicate-block="${v.key}">Duplizieren</button>
+                ${v.isDuplicate ? `<button class="small secondary" data-delete-duplicate="${v.key}">x</button>` : ''}
               </div>
               <div class="muted">Aktiver Nachweis: ${selectedAttempt ? `${selectedAttempt.date}, ${selectedAttempt.percent}% (${selectedAttempt.fulfilled ? 'Erfüllt' : 'Nicht erfüllt'})` : 'noch keiner'}</div>
             </div>
@@ -990,19 +1015,22 @@
       }
       ensureStudentPlan(student);
 
-      const allApplicable = state.classPlan.filter(block => {
+      const allPossibleEntries = [];
+      state.classPlan.forEach(block => {
         const p = state.studentPlans[student][block.id];
-        return p && p.applicable;
+        if (!p) return;
+        allPossibleEntries.push({ block, plan: p });
+        (p.duplicates || []).forEach(d => allPossibleEntries.push({ block, plan: d }));
       });
-      const yearShould = allApplicable.filter(block => {
-        const p = state.studentPlans[student][block.id];
-        return p.targetDate && p.targetDate <= todayISO();
+      const allApplicable = allPossibleEntries.filter(e => e.plan && e.plan.applicable);
+      const yearTargetCount = allApplicable.length;
+      const yearFulfilled = allApplicable.filter(e => {
+        const a = getSelectedAttempt(e.plan);
+        return a && a.fulfilled && Number(a.percent) >= 60;
       }).length;
-      const yearDone = allApplicable.filter(block => {
-        const p = state.studentPlans[student][block.id];
-        return p.attempts.length > 0;
-      }).length;
-      const yearPct = yearShould === 0 ? (yearDone > 0 ? 100 : 0) : Math.max(0, Math.min(100, (yearDone / yearShould) * 100));
+      const totalPossible = allPossibleEntries.length || 1;
+      const yearPct = yearTargetCount === 0 ? 0 : Math.max(0, Math.min(100, (yearFulfilled / yearTargetCount) * 100));
+      const yearTargetPct = Math.max(0, Math.min(100, (yearTargetCount / totalPossible) * 100));
 
       const subjectMap = {};
       state.classPlan.forEach(block => {
@@ -1025,7 +1053,7 @@
 
         const today = todayISO();
         const shouldHave = entries.filter(e => e.plan.targetDate && e.plan.targetDate <= today).length;
-        const performed = entries.filter(e => e.plan.attempts.length > 0).length;
+        const performed = entries.filter(e => { const a=getSelectedAttempt(e.plan); return !!a; }).length;
         const deltaPct = shouldHave === 0 ? (performed > 0 ? 100 : 0) : ((performed - shouldHave) / shouldHave) * 100;
 
         const overdue = entries
@@ -1073,10 +1101,13 @@
         const timelineStartDate = new Date('2025-08-01T00:00:00');
         const timelineEndDate = new Date('2026-07-31T00:00:00');
         const todayPosPct = Math.max(0, Math.min(100, ((todayDate - timelineStartDate) / (timelineEndDate - timelineStartDate)) * 100));
-        const lastTarget = [...sortedEntries].reverse().find(e => e.plan.targetDate)?.plan.targetDate;
-        const lastTargetDate = lastTarget ? new Date(lastTarget + 'T00:00:00') : todayDate;
-        const lastTargetPct = Math.max(0, Math.min(100, ((lastTargetDate - timelineStartDate) / (timelineEndDate - timelineStartDate)) * 100));
-        const progressWidthPct = Math.max(0, Math.min(todayPosPct, lastTargetPct));
+        const lastSuccessful = [...sortedEntries].reverse().find(e => {
+          const a = getSelectedAttempt(e.plan);
+          return a && a.fulfilled && Number(a.percent) >= 60;
+        });
+        const lastSuccessfulDate = lastSuccessful ? new Date((lastSuccessful.plan.targetDate || today) + 'T00:00:00') : timelineStartDate;
+        const lastSuccessfulPct = Math.max(0, Math.min(100, ((lastSuccessfulDate - timelineStartDate) / (timelineEndDate - timelineStartDate)) * 100));
+        const progressWidthPct = lastSuccessful ? lastSuccessfulPct : 0;
 
         const intensityRatio = Math.max(0, Math.min(1, Math.abs(deltaPct) / Math.max(1, Number(state.maxIntensityPercent || 30))));
         const planTrackColor = timelineBehind
@@ -1106,7 +1137,7 @@
           <div class="progress-card">
             <h4 style="margin:0 0 8px;">${escapeHtml(subject)}</h4>
             <div class="metric-row">
-              <div class="donut" style="--pct:${Math.max(0, Math.min(100, avg)).toFixed(1)}; background:conic-gradient(${avgColor} calc(var(--pct) * 1%), #e4edf5 0);" data-label="${avg.toFixed(0)}%"></div>
+              <div class="donut" style="--pct:${Math.max(0, Math.min(100, avg)).toFixed(1)}; background:conic-gradient(#0f7ebd calc(var(--pct) * 1%), #e4edf5 0);" data-label="${avg.toFixed(0)}%"></div>
               <div>
                 <div>Ø Leistung</div>
                 <div><strong style="color:${avgColor}">${avg.toFixed(1)}%</strong></div>
@@ -1133,10 +1164,10 @@
         <div class="overall-wrap">
           <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
             <strong>Jahresfortschritt (alle Fächer)</strong>
-            <span class="muted">Soll ${yearShould} / Ist ${yearDone}</span>
+            <span class="muted">Erfüllt ${yearFulfilled} / Ziel ${yearTargetCount} (gesamt möglich: ${totalPossible})</span>
           </div>
-          <div class="overall-bar" style="margin-top:8px;"><span style="width:${yearPct.toFixed(1)}%"></span></div>
-          <div class="muted" style="margin-top:5px;">${yearPct.toFixed(1)}% des Jahresplans erreicht</div>
+          <div class="overall-bar" style="margin-top:8px;"><span style="width:${yearPct.toFixed(1)}%"></span><div class="overall-target-dot" style="left:${yearTargetPct.toFixed(1)}%"></div></div>
+          <div class="muted" style="margin-top:5px;">${yearPct.toFixed(1)}% des individuellen Ziels erfüllt • Zielmarke bei ${yearTargetPct.toFixed(1)}% aller Lernbausteine</div>
         </div>
         ${cards || '<p class="muted">Für diese/n Schüler/in sind keine relevanten Lernbausteine aktiv.</p>'}
       `;
@@ -1438,6 +1469,16 @@
         renderAll();
       }
 
+      if (e.target.dataset.deleteDuplicate) {
+        const student = studentSelect.value || state.students[0];
+        if (!student) return;
+        const [blockId, dupId] = String(e.target.dataset.deleteDuplicate).split('::');
+        const base = state.studentPlans?.[student]?.[blockId];
+        if (!base || !Array.isArray(base.duplicates)) return;
+        base.duplicates = base.duplicates.filter(d => d.instanceId !== dupId);
+        renderAll();
+      }
+
       if (e.target.dataset.saveAttempt) {
         const student = studentSelect.value;
         const key = e.target.dataset.saveAttempt;
@@ -1509,9 +1550,9 @@
 
       if (e.target.dataset.planApply && student) {
         ensureStudentPlan(student);
-        const p = state.studentPlans[student][e.target.dataset.planApply];
-        p.applicable = e.target.checked;
-        if (!p.applicable) p.expanded = false;
+        const resolved = resolvePlanByKey(student, e.target.dataset.planApply);
+        if (!resolved) return;
+        resolved.plan.applicable = e.target.checked;
       }
 
       if (e.target.dataset.planDate && student) {
