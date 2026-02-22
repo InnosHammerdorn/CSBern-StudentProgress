@@ -173,6 +173,17 @@
       transform:translate(-50%,-50%);
       box-shadow:0 0 0 1px #0f7ebd;
     }
+    .overall-current-dot {
+      position:absolute;
+      top:50%;
+      width:12px;
+      height:12px;
+      border-radius:50%;
+      background:#0a6294;
+      border:2px solid #fff;
+      transform:translate(-50%,-50%);
+      box-shadow:0 0 0 1px #0a6294;
+    }
 
     .donut {
       --pct: 0;
@@ -1027,9 +1038,14 @@
         const a = getSelectedAttempt(e.plan);
         return a && a.fulfilled && Number(a.percent) >= 60;
       }).length;
+      const yearDoneNow = allApplicable.filter(e => !!getSelectedAttempt(e.plan)).length;
+      const yearShouldNow = allApplicable.filter(e => e.plan.targetDate && e.plan.targetDate <= todayISO()).length;
       const totalPossible = allPossibleEntries.length || 1;
       const yearPct = yearTargetCount === 0 ? 0 : Math.max(0, Math.min(100, (yearFulfilled / yearTargetCount) * 100));
       const yearTargetPct = Math.max(0, Math.min(100, (yearTargetCount / totalPossible) * 100));
+      const yearCurrentPct = yearTargetCount === 0 ? 0 : Math.max(0, Math.min(100, (yearShouldNow / yearTargetCount) * 100));
+      const yearOnTrack = yearDoneNow >= yearShouldNow;
+      const yearBarColor = yearOnTrack ? 'var(--success)' : 'var(--danger)';
 
       const subjectMap = {};
       state.classPlan.forEach(block => {
@@ -1163,10 +1179,10 @@
         <div class="overall-wrap">
           <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
             <strong>Jahresfortschritt (alle Fächer)</strong>
-            <span class="muted">Erfüllt ${yearFulfilled} / Ziel ${yearTargetCount} (gesamt möglich: ${totalPossible})</span>
+            <span class="muted">Ist ${yearDoneNow} / Soll bis heute ${yearShouldNow} • Erfüllt ${yearFulfilled} / Ziel ${yearTargetCount}</span>
           </div>
-          <div class="overall-bar" style="margin-top:8px;"><span style="width:${yearPct.toFixed(1)}%"></span><div class="overall-target-dot" style="left:${yearTargetPct.toFixed(1)}%"></div></div>
-          <div class="muted" style="margin-top:5px;">${yearPct.toFixed(1)}% des individuellen Ziels erfüllt • Zielmarke bei ${yearTargetPct.toFixed(1)}% aller Lernbausteine</div>
+          <div class="overall-bar" style="margin-top:8px;"><span style="width:${yearPct.toFixed(1)}%;background:${yearBarColor}"></span><div class="overall-current-dot" style="left:${yearCurrentPct.toFixed(1)}%" title="Heutiger Soll-Stand"></div><div class="overall-target-dot" style="left:${yearTargetPct.toFixed(1)}%" title="Individuelles Ziel"></div></div>
+          <div class="muted" style="margin-top:5px;">Jahresfortschritt ${yearPct.toFixed(1)}% • ${yearOnTrack ? 'Im/über Soll bis heute' : 'Unter Soll bis heute'} • Zielmarke bei ${yearTargetPct.toFixed(1)}% aller Lernbausteine</div>
         </div>
         ${cards || '<p class="muted">Für diese/n Schüler/in sind keine relevanten Lernbausteine aktiv.</p>'}
       `;
