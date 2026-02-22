@@ -988,10 +988,11 @@
                 <input type="date" data-plan-date="${v.key}" value="${v.plan.targetDate || ''}" ${disabled}>
                 <input class="weeks-mini" type="number" min="1" max="52" placeholder="X" data-plan-weeks="${v.key}" ${disabled}>
                 <button class="small" data-set-weeks="${v.key}" ${disabled}>+XW</button>
+                ${hasAttempt ? `<span class="badge">${selectedAttempt.percent}%</span><span class="muted">${selectedAttempt.fulfilled ? 'Erfüllt' : 'Nicht erfüllt'}</span>` : `
                 <input type="number" min="0" max="100" placeholder="%" data-attempt-pct="${v.key}" ${disabled}>
                 <input type="date" data-attempt-date="${v.key}" value="${todayISO()}" ${disabled}>
                 <select data-attempt-status="${v.key}" ${disabled}><option>Erfüllt</option><option>Nicht erfüllt</option></select>
-                <button class="small success" data-save-attempt="${v.key}" ${disabled}>Nachweis speichern</button>
+                <button class="small success" data-save-attempt="${v.key}" ${disabled}>Nachweis speichern</button>`}
                 <button class="small secondary" data-duplicate-block="${v.key}">Duplizieren</button>
                 ${v.isDuplicate ? `<button class="small secondary" data-delete-duplicate="${v.key}">x</button>` : ''}
               </div>
