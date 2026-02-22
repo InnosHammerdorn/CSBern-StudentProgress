@@ -266,6 +266,10 @@
     .timeline-bars {
       display: flex;
       align-items: flex-end;
+      --bar-count: 24;
+      display: grid;
+      grid-template-columns: repeat(var(--bar-count), minmax(0, 1fr));
+      align-items: end;
       gap: 2px;
       min-height: 180px;
       padding: 10px 6px 4px;
@@ -280,6 +284,8 @@
       align-items: center;
       min-width: 0;
       flex: 1 1 0;
+      min-width: 0;
+      width: 100%;
       gap: 2px;
     }
     .timeline-bar {
@@ -301,10 +307,14 @@
     .timeline-bar-label {
       text-align: center;
       font-size: 0.64rem;
+      font-size: 0.64rem;
       color: #38556e;
       line-height: 1.2;
     }
     .timeline-date {
+      font-size: 0.62rem;
+      color: var(--muted);
+      white-space: nowrap;
       font-size: 0.62rem;
       color: var(--muted);
       white-space: nowrap;
