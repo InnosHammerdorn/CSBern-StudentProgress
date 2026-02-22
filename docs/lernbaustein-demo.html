@@ -264,7 +264,8 @@
     .timeline-status.behind { background: #fdecec; color: #9b2635; border: 1px solid #f1c5cc; }
     .timeline-status.ahead { background: #e9f7ef; color: #1f7c4c; border: 1px solid #bfe4cd; }
     .timeline-bars {
-<<<<<<< codex/create-timeline-bar-for-lerhnachweis-visualization
+      display: flex;
+      align-items: flex-end;
       --bar-count: 24;
       display: grid;
       grid-template-columns: repeat(var(--bar-count), minmax(0, 1fr));
@@ -276,43 +277,21 @@
       border-radius: 10px;
       background: #f7fbff;
       overflow: hidden;
-=======
-      display: flex;
-      align-items: flex-end;
-      gap: 8px;
-      min-height: 180px;
-      padding: 12px 10px 6px;
-      border: 1px solid #d2dfeb;
-      border-radius: 10px;
-      background: #f7fbff;
-      overflow-x: auto;
->>>>>>> main
     }
     .timeline-bar-wrap {
       display: flex;
       flex-direction: column;
       align-items: center;
-<<<<<<< codex/create-timeline-bar-for-lerhnachweis-visualization
+      min-width: 0;
+      flex: 1 1 0;
       min-width: 0;
       width: 100%;
       gap: 2px;
     }
     .timeline-bar {
       width: 100%;
-      max-width: 16px;
-      min-width: 6px;
       height: 116px;
       border-radius: 5px 5px 2px 2px;
-=======
-      min-width: 74px;
-      flex: 0 0 74px;
-      gap: 5px;
-    }
-    .timeline-bar {
-      width: 30px;
-      height: 130px;
-      border-radius: 8px 8px 3px 3px;
->>>>>>> main
       background: #dce8f3;
       border: 1px solid #c4d4e3;
       position: relative;
@@ -327,23 +306,18 @@
     }
     .timeline-bar-label {
       text-align: center;
-<<<<<<< codex/create-timeline-bar-for-lerhnachweis-visualization
       font-size: 0.64rem;
-=======
-      font-size: 0.76rem;
->>>>>>> main
+      font-size: 0.64rem;
       color: #38556e;
       line-height: 1.2;
     }
     .timeline-date {
-<<<<<<< codex/create-timeline-bar-for-lerhnachweis-visualization
       font-size: 0.62rem;
       color: var(--muted);
       white-space: nowrap;
-=======
-      font-size: 0.73rem;
+      font-size: 0.62rem;
       color: var(--muted);
->>>>>>> main
+      white-space: nowrap;
     }
     .progress-card {
       border: 1px solid var(--border);
