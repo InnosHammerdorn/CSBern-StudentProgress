@@ -1072,7 +1072,16 @@
           .map(e => e.block.name);
 
         const avgColor = progressColorByAvg(avg);
+        function statusOrder(entry) {
+          const selected = getSelectedAttempt(entry.plan);
+          if (!selected) return 2; // noch kein Lernnachweis
+          const isSuccess = selected.fulfilled && Number(selected.percent) >= 60;
+          return isSuccess ? 1 : 0; // 0 = fehlgeschlagen, 1 = erfüllt
+        }
+
         const sortedEntries = [...entries].sort((a, b) => {
+          const statusDelta = statusOrder(a) - statusOrder(b);
+          if (statusDelta !== 0) return statusDelta;
           const aSel = getSelectedAttempt(a.plan);
           const bSel = getSelectedAttempt(b.plan);
           const aKey = (aSel && aSel.date) ? aSel.date : (a.plan.targetDate || '9999-12-31');
@@ -1113,16 +1122,22 @@
         const timelineStartDate = new Date('2025-08-01T00:00:00');
         const timelineEndDate = new Date('2026-07-31T00:00:00');
         const todayPosPct = Math.max(0, Math.min(100, ((todayDate - timelineStartDate) / (timelineEndDate - timelineStartDate)) * 100));
-        const lastSuccessful = [...sortedEntries].reverse().find(e => {
-          const a = getSelectedAttempt(e.plan);
-          return a && a.fulfilled && Number(a.percent) >= 60;
-        });
-        const lastSuccessfulAttempt = lastSuccessful ? getSelectedAttempt(lastSuccessful.plan) : null;
-        const lastSuccessfulDate = lastSuccessfulAttempt
-          ? new Date((lastSuccessfulAttempt.date || today) + 'T00:00:00')
-          : timelineStartDate;
-        const lastSuccessfulPct = Math.max(0, Math.min(100, ((lastSuccessfulDate - timelineStartDate) / (timelineEndDate - timelineStartDate)) * 100));
-        const progressWidthPct = lastSuccessful ? lastSuccessfulPct : 0;
+        const totalWeekWeight = sortedEntries.reduce((sum, e) => sum + Math.max(1, Number(e.block.expectedWeeks || 1)), 0);
+        const lastSuccessfulIndex = (() => {
+          for (let i = sortedEntries.length - 1; i >= 0; i -= 1) {
+            const selected = getSelectedAttempt(sortedEntries[i].plan);
+            if (selected && selected.fulfilled && Number(selected.percent) >= 60) return i;
+          }
+          return -1;
+        })();
+        const successfulWeekWeight = lastSuccessfulIndex >= 0
+          ? sortedEntries
+            .slice(0, lastSuccessfulIndex + 1)
+            .reduce((sum, e) => sum + Math.max(1, Number(e.block.expectedWeeks || 1)), 0)
+          : 0;
+        const progressWidthPct = totalWeekWeight > 0
+          ? (successfulWeekWeight / totalWeekWeight) * 100
+          : 0;
 
         const intensityRatio = Math.max(0, Math.min(1, Math.abs(deltaPct) / Math.max(1, Number(state.maxIntensityPercent || 30))));
         const planTrackColor = timelineBehind
