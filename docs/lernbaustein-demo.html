@@ -401,6 +401,15 @@
       transition: background 0.2s;
     }
 
+    .section-head {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-bottom: 6px;
+    }
+    .collapsible-content.hidden { display:none; }
+
     .notif-log {
       max-height: 200px;
       overflow: auto;
@@ -450,8 +459,8 @@
     </div>
 
     <section id="jahresplan" class="tab-content active panel">
-      <h3>Fächer & Lernbausteine definieren</h3>
-      <p class="muted">Je Eintrag: Fach, Lernbaustein-Name, erwartete Wochen bis Nachweis.</p>
+      <div class="section-head"><h3 style="margin:0;">Fächer & Lernbausteine definieren</h3><button class="small secondary" data-toggle-section="blocksSection" data-toggle-label="Lernbausteine">Einklappen</button></div>
+      <div id="blocksSection" class="collapsible-content"><p class="muted">Je Eintrag: Fach, Lernbaustein-Name, erwartete Wochen bis Nachweis.</p>
       <div class="subject-row">
         <div>
           <label>Fachliste (separat)</label>
@@ -492,9 +501,11 @@
         </div>
       </div>
       <table id="classPlanTable"></table>
+      </div>
 
       <hr style="border:none;border-top:1px solid var(--border);margin:16px 0;" />
-      <h3>Schülerliste</h3>
+      <div class="section-head"><h3 style="margin:0;">Schülerliste</h3><button class="small secondary" data-toggle-section="studentsSection" data-toggle-label="Schülerliste">Einklappen</button></div>
+      <div id="studentsSection" class="collapsible-content">
       <div class="grid-2">
         <div>
           <label>Schüler/in hinzufügen</label>
@@ -505,6 +516,7 @@
         </div>
       </div>
       <div id="studentBadges"></div>
+      </div>
     </section>
 
     <section id="individuell" class="tab-content panel">
@@ -1072,16 +1084,7 @@
           .map(e => e.block.name);
 
         const avgColor = progressColorByAvg(avg);
-        function statusOrder(entry) {
-          const selected = getSelectedAttempt(entry.plan);
-          if (!selected) return 2; // noch kein Lernnachweis
-          const isSuccess = selected.fulfilled && Number(selected.percent) >= 60;
-          return isSuccess ? 1 : 0; // 0 = fehlgeschlagen, 1 = erfüllt
-        }
-
         const sortedEntries = [...entries].sort((a, b) => {
-          const statusDelta = statusOrder(a) - statusOrder(b);
-          if (statusDelta !== 0) return statusDelta;
           const aSel = getSelectedAttempt(a.plan);
           const bSel = getSelectedAttempt(b.plan);
           const aKey = (aSel && aSel.date) ? aSel.date : (a.plan.targetDate || '9999-12-31');
@@ -1122,22 +1125,16 @@
         const timelineStartDate = new Date('2025-08-01T00:00:00');
         const timelineEndDate = new Date('2026-07-31T00:00:00');
         const todayPosPct = Math.max(0, Math.min(100, ((todayDate - timelineStartDate) / (timelineEndDate - timelineStartDate)) * 100));
-        const totalWeekWeight = sortedEntries.reduce((sum, e) => sum + Math.max(1, Number(e.block.expectedWeeks || 1)), 0);
-        const lastSuccessfulIndex = (() => {
-          for (let i = sortedEntries.length - 1; i >= 0; i -= 1) {
-            const selected = getSelectedAttempt(sortedEntries[i].plan);
-            if (selected && selected.fulfilled && Number(selected.percent) >= 60) return i;
-          }
-          return -1;
-        })();
-        const successfulWeekWeight = lastSuccessfulIndex >= 0
-          ? sortedEntries
-            .slice(0, lastSuccessfulIndex + 1)
-            .reduce((sum, e) => sum + Math.max(1, Number(e.block.expectedWeeks || 1)), 0)
-          : 0;
-        const progressWidthPct = totalWeekWeight > 0
-          ? (successfulWeekWeight / totalWeekWeight) * 100
-          : 0;
+        const lastSuccessful = [...sortedEntries].reverse().find(e => {
+          const a = getSelectedAttempt(e.plan);
+          return a && a.fulfilled && Number(a.percent) >= 60;
+        });
+        const lastSuccessfulAttempt = lastSuccessful ? getSelectedAttempt(lastSuccessful.plan) : null;
+        const lastSuccessfulDate = lastSuccessfulAttempt
+          ? new Date((lastSuccessfulAttempt.date || today) + 'T00:00:00')
+          : timelineStartDate;
+        const lastSuccessfulPct = Math.max(0, Math.min(100, ((lastSuccessfulDate - timelineStartDate) / (timelineEndDate - timelineStartDate)) * 100));
+        const progressWidthPct = lastSuccessful ? lastSuccessfulPct : 0;
 
         const intensityRatio = Math.max(0, Math.min(1, Math.abs(deltaPct) / Math.max(1, Number(state.maxIntensityPercent || 30))));
         const planTrackColor = timelineBehind
@@ -1434,6 +1431,16 @@
         if (used) return alert('Fach wird in Lernbausteinen verwendet und kann nicht entfernt werden.');
         state.subjects = state.subjects.filter(x => x !== s);
         renderAll();
+      }
+
+      if (e.target.dataset.toggleSection) {
+        const sectionId = e.target.dataset.toggleSection;
+        const label = e.target.dataset.toggleLabel || 'Bereich';
+        const el = document.getElementById(sectionId);
+        if (!el) return;
+        el.classList.toggle('hidden');
+        e.target.textContent = el.classList.contains('hidden') ? 'Ausklappen' : 'Einklappen';
+        e.target.setAttribute('aria-expanded', String(!el.classList.contains('hidden')));
       }
 
       if (e.target.dataset.subjectTab) {
