@@ -138,6 +138,18 @@
       flex-wrap: wrap;
       margin-bottom: 8px;
     }
+    .block-create-row {
+      display: flex;
+      gap: 10px;
+      align-items: end;
+      flex-wrap: wrap;
+    }
+    .block-create-row .grow { flex: 1 1 260px; }
+    .block-create-row .weeks-compact {
+      width: 90px;
+      min-width: 90px;
+      flex: 0 0 90px;
+    }
 
     .overall-wrap {
       border: 1px solid var(--border);
@@ -462,33 +474,33 @@
         </div>
         <div id="subjectBadges"></div>
       </div>
+      <div class="grid-2" style="margin:8px 0;">
+        <div>
+          <label>Filter: nur Fach anzeigen</label>
+          <select id="classPlanFilterSubject"></select>
+        </div>
+      </div>
       <div class="block-create-box">
-        <div class="grid-3">
-          <div>
+        <div class="block-create-row">
+          <div class="grow">
             <label>Fach (aus Liste)</label>
             <select id="newSubject"></select>
           </div>
-          <div>
+          <div class="grow">
             <label>Lernbaustein</label>
             <input id="newBlockName" placeholder="Bruchrechnen 1" />
           </div>
-          <div>
-            <label>Erwartete Wochen</label>
+          <div class="weeks-compact">
+            <label>Wochen</label>
             <input id="newExpectedWeeks" type="number" min="1" max="52" value="2" />
           </div>
-        </div>
-        <div class="grid-2" style="margin-top:8px;">
-          <div>
+          <div class="grow">
             <label>Vorheriger Lernbaustein (optional)</label>
             <select id="newPreviousBlock"></select>
           </div>
-          <div>
-            <label>Filter: nur Fach anzeigen</label>
-            <select id="classPlanFilterSubject"></select>
+          <div class="actions">
+            <button id="addBlockBtn">+ Lernbaustein hinzufügen</button>
           </div>
-        </div>
-        <div class="actions" style="margin-top:8px;">
-          <button id="addBlockBtn">+ Lernbaustein hinzufügen</button>
         </div>
       </div>
       <table id="classPlanTable"></table>
@@ -846,10 +858,13 @@
       const score = Math.max(0, Math.min(100, Number(avg || 0)));
       if (score < 60) {
         const t = score / 60;
-        return `hsl(355, ${Math.round(86 - t * 14)}%, ${Math.round(42 + t * 8)}%)`;
+        return `hsl(2, ${Math.round(48 + t * 10)}%, ${Math.round(46 - t * 5)}%)`;
       }
       const t = (score - 60) / 40;
-      return `hsl(132, ${Math.round(28 + t * 52)}%, ${Math.round(46 - t * 8)}%)`;
+      const hue = Math.round(84 + t * 36); // olivgrün -> sattes Grün
+      const sat = Math.round(46 + t * 16);
+      const light = Math.round(38 - t * 4);
+      return `hsl(${hue}, ${sat}%, ${light}%)`;
     }
 
     function saveState() {
@@ -956,9 +971,13 @@
     }
 
     function renderStudentSelects() {
+      const prevStudent = studentSelect.value;
+      const prevProgressStudent = progressStudentSelect.value;
       const opts = state.students.map(s => `<option>${escapeHtml(s)}</option>`).join('');
       studentSelect.innerHTML = opts || '<option value="">Keine Schüler/innen</option>';
       progressStudentSelect.innerHTML = opts || '<option value="">Keine Schüler/innen</option>';
+      if (state.students.includes(prevStudent)) studentSelect.value = prevStudent;
+      if (state.students.includes(prevProgressStudent)) progressStudentSelect.value = prevProgressStudent;
     }
 
     function renderIndividualPlan() {
@@ -973,7 +992,7 @@
       const activeSubject = state.selectedSubjectByStudent[student];
       const subjectTabs = availableSubjects.map(s => `<button class="subject-tab-btn ${s===activeSubject?'active':''}" data-subject-tab="${escapeHtmlAttr(s)}">${escapeHtml(s)}</button>`).join('');
 
-      const cards = [];
+      const cardEntries = [];
       state.classPlan.filter(b => !activeSubject || b.subject === activeSubject).forEach(block => {
         const basePlan = state.studentPlans[student][block.id] || { applicable: true, targetDate: '', attempts: [], duplicates: [] };
         const variants = [{ plan: basePlan, key: makePlanKey(block.id, 'base'), isDuplicate: false }]
@@ -981,9 +1000,24 @@
 
         variants.forEach(v => {
           const selectedAttempt = getSelectedAttempt(v.plan);
-          const hasAttempt = !!selectedAttempt;
-          const disabled = hasAttempt ? 'disabled' : '';
-          cards.push(`
+          const rank = !selectedAttempt ? 2 : ((selectedAttempt.fulfilled && Number(selectedAttempt.percent) >= 60) ? 0 : 1);
+          const dateKey = (selectedAttempt && selectedAttempt.date) ? selectedAttempt.date : (v.plan.targetDate || '9999-12-31');
+          cardEntries.push({ block, variant: v, selectedAttempt, rank, dateKey });
+        });
+      });
+
+      cardEntries.sort((a, b) => {
+        const rankDelta = a.rank - b.rank;
+        if (rankDelta !== 0) return rankDelta;
+        const dateDelta = a.dateKey.localeCompare(b.dateKey);
+        if (dateDelta !== 0) return dateDelta;
+        return a.block.name.localeCompare(b.block.name, 'de');
+      });
+
+      const cards = cardEntries.map(({ block, variant: v, selectedAttempt }) => {
+        const hasAttempt = !!selectedAttempt;
+        const disabled = hasAttempt ? 'disabled' : '';
+        return `
             <div class="lb-card ${v.isDuplicate ? 'repeat-child' : ''} ${v.plan.applicable ? '' : 'inactive'}">
               <div class="lb-line">
                 <label class="switch" title="Aktiv/Inaktiv"><input type="checkbox" data-plan-apply="${v.key}" ${v.plan.applicable ? 'checked' : ''}><span class="slider"></span></label>
@@ -1003,8 +1037,7 @@
               </div>
               <div class="muted">Aktiver Nachweis: ${selectedAttempt ? `${selectedAttempt.date}, ${selectedAttempt.percent}% (${selectedAttempt.fulfilled ? 'Erfüllt' : 'Nicht erfüllt'})` : 'noch keiner'}</div>
             </div>
-          `);
-        });
+          `;
       });
 
       individualPlanTable.innerHTML = `
@@ -1064,7 +1097,11 @@
 
         const today = todayISO();
         const shouldHave = entries.filter(e => e.plan.targetDate && e.plan.targetDate <= today).length;
-        const performed = entries.filter(e => { const a=getSelectedAttempt(e.plan); return !!a; }).length;
+        const performed = entries.filter(e => {
+          if (!(e.plan.targetDate && e.plan.targetDate <= today)) return false;
+          const selected = getSelectedAttempt(e.plan);
+          return !!(selected && selected.fulfilled && Number(selected.percent) >= 60);
+        }).length;
         const deltaPct = shouldHave === 0 ? (performed > 0 ? 100 : 0) : ((performed - shouldHave) / shouldHave) * 100;
 
         const overdue = entries
@@ -1072,7 +1109,16 @@
           .map(e => e.block.name);
 
         const avgColor = progressColorByAvg(avg);
+        function statusOrder(entry) {
+          const selected = getSelectedAttempt(entry.plan);
+          if (!selected) return 2; // noch kein Lernnachweis
+          const isSuccess = selected.fulfilled && Number(selected.percent) >= 60;
+          return isSuccess ? 1 : 0; // 0 = fehlgeschlagen, 1 = erfüllt
+        }
+
         const sortedEntries = [...entries].sort((a, b) => {
+          const statusDelta = statusOrder(a) - statusOrder(b);
+          if (statusDelta !== 0) return statusDelta;
           const aSel = getSelectedAttempt(a.plan);
           const bSel = getSelectedAttempt(b.plan);
           const aKey = (aSel && aSel.date) ? aSel.date : (a.plan.targetDate || '9999-12-31');
@@ -1113,21 +1159,24 @@
         const timelineStartDate = new Date('2025-08-01T00:00:00');
         const timelineEndDate = new Date('2026-07-31T00:00:00');
         const todayPosPct = Math.max(0, Math.min(100, ((todayDate - timelineStartDate) / (timelineEndDate - timelineStartDate)) * 100));
-        const lastSuccessful = [...sortedEntries].reverse().find(e => {
-          const a = getSelectedAttempt(e.plan);
-          return a && a.fulfilled && Number(a.percent) >= 60;
-        });
-        const lastSuccessfulAttempt = lastSuccessful ? getSelectedAttempt(lastSuccessful.plan) : null;
-        const lastSuccessfulDate = lastSuccessfulAttempt
-          ? new Date((lastSuccessfulAttempt.date || today) + 'T00:00:00')
-          : timelineStartDate;
-        const lastSuccessfulPct = Math.max(0, Math.min(100, ((lastSuccessfulDate - timelineStartDate) / (timelineEndDate - timelineStartDate)) * 100));
-        const progressWidthPct = lastSuccessful ? lastSuccessfulPct : 0;
+        const totalWeekWeight = sortedEntries.reduce((sum, e) => sum + Math.max(1, Number(e.block.expectedWeeks || 1)), 0);
+        const lastSuccessfulIndex = (() => {
+          for (let i = sortedEntries.length - 1; i >= 0; i -= 1) {
+            const selected = getSelectedAttempt(sortedEntries[i].plan);
+            if (selected && selected.fulfilled && Number(selected.percent) >= 60) return i;
+          }
+          return -1;
+        })();
+        const successfulWeekWeight = lastSuccessfulIndex >= 0
+          ? sortedEntries
+            .slice(0, lastSuccessfulIndex + 1)
+            .reduce((sum, e) => sum + Math.max(1, Number(e.block.expectedWeeks || 1)), 0)
+          : 0;
+        const progressWidthPct = totalWeekWeight > 0
+          ? (successfulWeekWeight / totalWeekWeight) * 100
+          : 0;
 
-        const intensityRatio = Math.max(0, Math.min(1, Math.abs(deltaPct) / Math.max(1, Number(state.maxIntensityPercent || 30))));
-        const planTrackColor = timelineBehind
-          ? `hsl(0, ${Math.round(40 + intensityRatio * 50)}%, ${Math.round(86 - intensityRatio * 28)}%)`
-          : `hsl(122, ${Math.round(25 + intensityRatio * 55)}%, ${Math.round(86 - intensityRatio * 28)}%)`;
+        const planTrackColor = avgColor;
 
         const timelineBars = sortedEntries.map((e, idx) => {
           const selected = getSelectedAttempt(e.plan);
@@ -1152,7 +1201,7 @@
           <div class="progress-card">
             <h4 style="margin:0 0 8px;">${escapeHtml(subject)}</h4>
             <div class="metric-row">
-              <div class="donut" style="--pct:${Math.max(0, Math.min(100, avg)).toFixed(1)}; background:conic-gradient(#0f7ebd calc(var(--pct) * 1%), #e4edf5 0);" data-label="${avg.toFixed(0)}%"></div>
+              <div class="donut" style="--pct:${Math.max(0, Math.min(100, avg)).toFixed(1)}; background:conic-gradient(${avgColor} calc(var(--pct) * 1%), #e4edf5 0);" data-label="${avg.toFixed(0)}%"></div>
               <div>
                 <div>Ø Leistung</div>
                 <div><strong style="color:${avgColor}">${avg.toFixed(1)}%</strong></div>
