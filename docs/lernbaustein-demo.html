@@ -870,10 +870,13 @@
       const score = Math.max(0, Math.min(100, Number(avg || 0)));
       if (score < 60) {
         const t = score / 60;
-        return `hsl(355, ${Math.round(86 - t * 14)}%, ${Math.round(42 + t * 8)}%)`;
+        return `hsl(2, ${Math.round(48 + t * 10)}%, ${Math.round(46 - t * 5)}%)`;
       }
       const t = (score - 60) / 40;
-      return `hsl(132, ${Math.round(28 + t * 52)}%, ${Math.round(46 - t * 8)}%)`;
+      const hue = Math.round(84 + t * 36); // olivgrün -> sattes Grün
+      const sat = Math.round(46 + t * 16);
+      const light = Math.round(38 - t * 4);
+      return `hsl(${hue}, ${sat}%, ${light}%)`;
     }
 
     function saveState() {
@@ -980,9 +983,13 @@
     }
 
     function renderStudentSelects() {
+      const prevStudent = studentSelect.value;
+      const prevProgressStudent = progressStudentSelect.value;
       const opts = state.students.map(s => `<option>${escapeHtml(s)}</option>`).join('');
       studentSelect.innerHTML = opts || '<option value="">Keine Schüler/innen</option>';
       progressStudentSelect.innerHTML = opts || '<option value="">Keine Schüler/innen</option>';
+      if (state.students.includes(prevStudent)) studentSelect.value = prevStudent;
+      if (state.students.includes(prevProgressStudent)) progressStudentSelect.value = prevProgressStudent;
     }
 
     function renderIndividualPlan() {
@@ -1102,7 +1109,11 @@
 
         const today = todayISO();
         const shouldHave = entries.filter(e => e.plan.targetDate && e.plan.targetDate <= today).length;
-        const performed = entries.filter(e => { const a=getSelectedAttempt(e.plan); return !!a; }).length;
+        const performed = entries.filter(e => {
+          if (!(e.plan.targetDate && e.plan.targetDate <= today)) return false;
+          const selected = getSelectedAttempt(e.plan);
+          return !!(selected && selected.fulfilled && Number(selected.percent) >= 60);
+        }).length;
         const deltaPct = shouldHave === 0 ? (performed > 0 ? 100 : 0) : ((performed - shouldHave) / shouldHave) * 100;
 
         const overdue = entries
@@ -1177,10 +1188,7 @@
           ? (successfulWeekWeight / totalWeekWeight) * 100
           : 0;
 
-        const intensityRatio = Math.max(0, Math.min(1, Math.abs(deltaPct) / Math.max(1, Number(state.maxIntensityPercent || 30))));
-        const planTrackColor = timelineBehind
-          ? `hsl(0, ${Math.round(40 + intensityRatio * 50)}%, ${Math.round(86 - intensityRatio * 28)}%)`
-          : `hsl(122, ${Math.round(25 + intensityRatio * 55)}%, ${Math.round(86 - intensityRatio * 28)}%)`;
+        const planTrackColor = avgColor;
 
         const timelineBars = sortedEntries.map((e, idx) => {
           const selected = getSelectedAttempt(e.plan);
