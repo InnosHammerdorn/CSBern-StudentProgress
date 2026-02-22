@@ -253,36 +253,60 @@
     .attempt-list { margin-top: 6px; border-top: 1px dashed #d9e5f1; padding-top: 6px; }
     .attempt-item { display:flex; align-items:center; gap:8px; font-size:.84rem; margin-bottom:4px; }
 
-    .year-track { margin-top:8px; }
-    .track {
+    .year-track { margin-top:10px; }
+    .timeline-status {
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: inline-block;
+    }
+    .timeline-status.behind { background: #fdecec; color: #9b2635; border: 1px solid #f1c5cc; }
+    .timeline-status.ahead { background: #e9f7ef; color: #1f7c4c; border: 1px solid #bfe4cd; }
+    .timeline-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      min-height: 180px;
+      padding: 12px 10px 6px;
+      border: 1px solid #d2dfeb;
+      border-radius: 10px;
+      background: #f7fbff;
+      overflow-x: auto;
+    }
+    .timeline-bar-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 74px;
+      flex: 0 0 74px;
+      gap: 5px;
+    }
+    .timeline-bar {
+      width: 30px;
+      height: 130px;
+      border-radius: 8px 8px 3px 3px;
+      background: #dce8f3;
+      border: 1px solid #c4d4e3;
       position: relative;
-      height: 16px;
-      border-radius: 999px;
-      background: #e5eef6;
-      border: 1px solid #d0deea;
-      overflow: visible;
+      overflow: hidden;
     }
-    .track-fill {
-      position:absolute; inset:0 auto 0 0; width:0%; border-radius:999px;
-      background: #a7d7a8;
+    .timeline-bar > span {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 0%;
     }
-    .track-today-dot {
-      position:absolute;
-      top:50%;
-      width:12px;
-      height:12px;
-      border-radius:50%;
-      background:#18384d;
-      border:2px solid white;
-      transform: translate(-50%, -50%);
-      box-shadow:0 0 0 1px #17384d;
-      z-index:2;
+    .timeline-bar-label {
+      text-align: center;
+      font-size: 0.76rem;
+      color: #38556e;
+      line-height: 1.2;
     }
-    .track-seg {
-      position:absolute;
-      top:0;
-      height:100%;
-      border-radius:999px;
+    .timeline-date {
+      font-size: 0.73rem;
+      color: var(--muted);
     }
     .progress-card {
       border: 1px solid var(--border);
@@ -466,21 +490,148 @@
     };
 
     function seededDemoData() {
+      const germanNames = [
+        'Wortarten und Satzglieder sicher bestimmen',
+        'Gross- und Kleinschreibung in Alltagstexten anwenden',
+        'Zeichensetzung bei Nebensätzen korrekt setzen',
+        'Direkte und indirekte Rede unterscheiden',
+        'Sachtexte: Kernaussagen markieren und gliedern',
+        'Sachtexte zusammenfassen (Einleitung, Kern, Schluss)',
+        'Argumente erkennen und begründen',
+        'Eigene Stellungnahmen mit Belegen verfassen',
+        'Erzählperspektiven in literarischen Texten analysieren',
+        'Figurencharakterisierung mit Textstellen schreiben',
+        'Spannungsbogen in Kurzgeschichten beschreiben',
+        'Gedichte: sprachliche Bilder deuten',
+        'Rhetorische Mittel in Reden identifizieren',
+        'Diskussionsbeiträge strukturiert formulieren',
+        'Präsentationsnotizen adressatengerecht verfassen',
+        'Recherchequellen prüfen und korrekt zitieren',
+        'Berichte sachlich und chronologisch schreiben',
+        'Protokolle vollständig und präzise verfassen',
+        'Bewerbungsschreiben und Lebenslauf erstellen',
+        'Formelle E-Mails situationsgerecht schreiben',
+        'Lesestrategien bei komplexen Texten einsetzen',
+        'Textvergleich: Gemeinsamkeiten und Unterschiede darlegen',
+        'Prüfungstraining Deutsch: Aufgabenformat sicher anwenden',
+        'Transferaufgabe: eigenes Dossier verfassen'
+      ];
+
+      const englishNames = [
+        'Classroom English und Präsensformen sicher anwenden',
+        'Question forms und short answers im Dialog nutzen',
+        'Reading for gist: Hauptaussagen schnell erfassen',
+        'Reading for detail: Informationen gezielt finden',
+        'Vocabulary building: school and hobbies',
+        'Past simple in narrativen Texten einsetzen',
+        'Past continuous in Geschichten passend verwenden',
+        'Email writing: polite openings and closings',
+        'Paragraph writing with topic sentences',
+        'Linking words for coherent writing',
+        'Listening: key information from interviews extract',
+        'Speaking: describing pictures with structure',
+        'Comparatives and superlatives in context',
+        'Future forms: will, going to, present continuous',
+        'Modal verbs for advice and obligation',
+        'Role play: giving directions and asking help',
+        'Project reading: nonfiction articles summarize',
+        'Debate language: agreeing and disagreeing',
+        'Presentation skills: signposting and transitions',
+        'Pronunciation clinic: stress and intonation',
+        'Exam reading strategies under time pressure',
+        'Exam writing: opinion paragraph with reasons',
+        'Integrated task: listen-read-write response',
+        'Final performance task: mini debate and reflection'
+      ];
+
+      function buildBlocks(subject, names) {
+        return names.map((name, idx) => ({
+          id: uid(),
+          subject,
+          name,
+          expectedWeeks: idx % 3 === 0 ? 3 : 2,
+          previousBlockId: ''
+        })).map((b, idx, arr) => ({
+          ...b,
+          previousBlockId: idx === 0 ? '' : arr[idx - 1].id
+        }));
+      }
+
+      const germanBlocks = buildBlocks('Deutsch', germanNames);
+      const englishBlocks = buildBlocks('Englisch', englishNames);
+      const classPlan = [...germanBlocks, ...englishBlocks];
+
+      function dateByIndex(idx) {
+        const base = new Date('2025-08-18T00:00:00');
+        base.setDate(base.getDate() + (idx * 14));
+        return base.toISOString().slice(0, 10);
+      }
+
+      function createStudentPlan(profile) {
+        const plans = {};
+        classPlan.forEach((block, idx) => {
+          const targetDate = dateByIndex(idx);
+          const doneCount = profile.doneBySubject[block.subject] || 0;
+          const isDone = idx % 24 < doneCount;
+          const percentBase = profile.baseBySubject[block.subject] || 60;
+          const variance = ((idx % 5) - 2) * profile.variance;
+          const percent = Math.max(35, Math.min(98, Math.round(percentBase + variance)));
+          const attemptDate = new Date(targetDate + 'T00:00:00');
+          attemptDate.setDate(attemptDate.getDate() + profile.dateOffsetDays);
+
+          plans[block.id] = {
+            applicable: true,
+            expanded: true,
+            targetDate,
+            attempts: isDone ? [{
+              date: attemptDate.toISOString().slice(0, 10),
+              percent,
+              fulfilled: percent >= 60,
+              repeat: percent < 60,
+              repeatDate: percent < 60 ? addWeeks(targetDate, 2) : '',
+              selected: true
+            }] : []
+          };
+        });
+        return plans;
+      }
+
+      const students = ['Lina Steiner', 'Noah Graf', 'Mia Keller'];
+      const studentPlans = {
+        'Lina Steiner': createStudentPlan({
+          doneBySubject: { Deutsch: 11, Englisch: 9 },
+          baseBySubject: { Deutsch: 66, Englisch: 62 },
+          variance: 5,
+          dateOffsetDays: 4
+        }),
+        'Noah Graf': createStudentPlan({
+          doneBySubject: { Deutsch: 7, Englisch: 6 },
+          baseBySubject: { Deutsch: 54, Englisch: 50 },
+          variance: 6,
+          dateOffsetDays: 11
+        }),
+        'Mia Keller': createStudentPlan({
+          doneBySubject: { Deutsch: 16, Englisch: 15 },
+          baseBySubject: { Deutsch: 90, Englisch: 87 },
+          variance: 4,
+          dateOffsetDays: -3
+        })
+      };
+
       return {
         teacherName: 'Frau Keller',
-        stufe: '7. Klasse',
+        stufe: '7. Klasse (Schuljahr 2025/26)',
         maxIntensityPercent: 30,
-        subjects: ['Mathematik', 'Deutsch'],
+        subjects: ['Deutsch', 'Englisch'],
         classPlanSubjectFilter: 'ALL',
-        classPlan: [
-          { id: uid(), subject: 'Mathematik', name: 'Bruchrechnen 1', expectedWeeks: 2, previousBlockId: '' },
-          { id: uid(), subject: 'Mathematik', name: 'Gleichungen', expectedWeeks: 2, previousBlockId: '' },
-          { id: uid(), subject: 'Deutsch', name: 'Leseverstehen', expectedWeeks: 3, previousBlockId: '' },
-          { id: uid(), subject: 'Deutsch', name: 'Argumentieren', expectedWeeks: 2, previousBlockId: '' }
-        ],
-        students: ['Lina Steiner', 'Noah Graf', 'Mia Keller'],
-        studentPlans: {},
-        selectedSubjectByStudent: {},
+        classPlan,
+        students,
+        studentPlans,
+        selectedSubjectByStudent: {
+          'Lina Steiner': 'Deutsch',
+          'Noah Graf': 'Deutsch',
+          'Mia Keller': 'Deutsch'
+        },
         notifications: [],
         lastWeeklyPushISO: null
       };
@@ -774,25 +925,42 @@
           .map(e => e.block.name);
 
         const avgColor = progressColorByAvg(avg);
-        const nowPos = (() => {
-          const d = new Date();
-          const yearStart = new Date(d.getFullYear(), 0, 1);
-          const yearEnd = new Date(d.getFullYear(), 11, 31);
-          return Math.max(0, Math.min(100, ((d - yearStart) / (yearEnd - yearStart)) * 100));
-        })();
-        const totalWeeks = Math.max(1, entries.reduce((s, e) => s + Number(e.block.expectedWeeks || 1), 0));
-        const completedWeeks = entries
-          .filter(e => e.plan.attempts.length > 0)
-          .reduce((s, e) => s + Number(e.block.expectedWeeks || 1), 0);
-        const donePctYear = Math.max(0, Math.min(100, (completedWeeks / totalWeeks) * 100));
-        const lagging = donePctYear < nowPos;
+        const sortedEntries = [...entries].sort((a, b) => {
+          if (!a.plan.targetDate && !b.plan.targetDate) return 0;
+          if (!a.plan.targetDate) return 1;
+          if (!b.plan.targetDate) return -1;
+          return a.plan.targetDate.localeCompare(b.plan.targetDate);
+        });
+        const expectedUpToToday = sortedEntries.filter(e => e.plan.targetDate && e.plan.targetDate <= today).length;
+        const achievedUpToToday = sortedEntries.filter(e => {
+          const selected = getSelectedAttempt(e.plan);
+          return selected && selected.date <= today;
+        }).length;
+        const timelineBehind = achievedUpToToday < expectedUpToToday;
+        const statusClass = timelineBehind ? 'behind' : 'ahead';
+        const statusText = timelineBehind
+          ? `Hinter dem Plan: ${achievedUpToToday} von ${expectedUpToToday} fälligen Nachweisen erfasst`
+          : `Im/über Plan: ${achievedUpToToday} Nachweise bis heute erfasst (fällig: ${expectedUpToToday})`;
 
-        const timelineSegments = lagging
-          ? `
-            <div class="track-seg" style="left:0;width:${donePctYear.toFixed(1)}%;background:#4f5e69"></div>
-            <div class="track-seg" style="left:${donePctYear.toFixed(1)}%;width:${(nowPos-donePctYear).toFixed(1)}%;background:#e58b8b"></div>
-          `
-          : `<div class="track-seg" style="left:0;width:${donePctYear.toFixed(1)}%;background:#59b774"></div>`;
+        const timelineBars = sortedEntries.map((e, idx) => {
+          const selected = getSelectedAttempt(e.plan);
+          const hasAttempt = !!selected;
+          const score = Math.max(0, Math.min(100, Number(selected ? selected.percent : 0)));
+          const hue = Math.round((score / 100) * 120);
+          const sat = 70;
+          const light = Math.round(48 - (score / 100) * 8);
+          const barColor = hasAttempt ? `hsl(${hue}, ${sat}%, ${light}%)` : '#b8c5d1';
+          const label = hasAttempt ? `${selected.percent}%` : 'offen';
+          const displayDate = hasAttempt ? selected.date : (e.plan.targetDate || 'kein Datum');
+          return `
+            <div class="timeline-bar-wrap" title="${escapeHtmlAttr(e.block.name)} – ${escapeHtmlAttr(label)}">
+              <div><strong>${label}</strong></div>
+              <div class="timeline-bar"><span style="height:${score.toFixed(1)}%;background:${barColor}"></span></div>
+              <div class="timeline-bar-label">LN ${idx + 1}</div>
+              <div class="timeline-date">${escapeHtml(displayDate)}</div>
+            </div>
+          `;
+        }).join('');
 
         return `
           <div class="progress-card">
@@ -808,11 +976,9 @@
             <div style="margin-top:4px;">Soll erledigt / Ist erledigt: <strong>${shouldHave}</strong> / ${performed}</div>
             <div>Planabweichung: <strong>${deltaPct.toFixed(1)}%</strong></div>
             <div class="year-track">
-              <div class="track">
-                ${timelineSegments}
-                <div class="track-today-dot" style="left:${nowPos.toFixed(1)}%"></div>
-              </div>
-              <div class="muted">Jahr (wochenbasiert): erledigt ${donePctYear.toFixed(1)}%, heute ${nowPos.toFixed(1)}%</div>
+              <div class="timeline-status ${statusClass}">${statusText}</div>
+              <div class="timeline-bars">${timelineBars || '<span class="muted">Noch keine Nachweise.</span>'}</div>
+              <div class="muted" style="margin-top:6px;">LN = Lernnachweis, Balkenhöhe = erreichte Prozentzahl.</div>
             </div>
             <div class="muted">Überfällig: ${overdue.length ? escapeHtml(overdue.join(', ')) : 'keine'}</div>
           </div>
