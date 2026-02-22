@@ -252,6 +252,22 @@
 
     .attempt-list { margin-top: 6px; border-top: 1px dashed #d9e5f1; padding-top: 6px; }
     .attempt-item { display:flex; align-items:center; gap:8px; font-size:.84rem; margin-bottom:4px; }
+    .lb-line {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+    }
+    .lb-card.repeat-child {
+      border-left: 3px solid #5f8fb2;
+      background: #f8fbff;
+    }
+    .repeat-chip {
+      font-size: .74rem;
+      color: #2c5f84;
+      border: 1px solid #bfd4e6;
+      border-radius: 999px;
+      padding: 1px 6px;
+      background: #edf6fd;
+    }
 
     .year-track { margin-top:10px; }
     .timeline-status {
@@ -338,6 +354,14 @@
       display: block;
       height: 100%;
       width: 0%;
+    }
+    .timeline-repeat-link {
+      width: 10px;
+      height: 2px;
+      background: #5f8fb2;
+      margin-bottom: 2px;
+      border-radius: 999px;
+      opacity: .85;
     }
     .progress-card {
       border: 1px solid var(--border);
@@ -458,7 +482,7 @@
           <label>Schüler/in</label>
           <select id="studentSelect"></select>
         </div>
-        <div class="muted" style="padding-top:24px;">📅 Datum direkt wählen oder „in X Woche(n)“ setzen.</div>
+        <div class="muted" style="padding-top:24px;">🗓 Datum direkt wählen oder „in X Woche(n)“ setzen.</div>
       </div>
       <table id="individualPlanTable"></table>
     </section>
@@ -740,6 +764,21 @@
           repeatDate: a.repeatDate || '',
           selected: typeof a.selected === 'boolean' ? a.selected : idx === (p.attempts.length - 1)
         }));
+        if (!Array.isArray(p.duplicates)) p.duplicates = [];
+        p.duplicates = p.duplicates.map(d => ({
+          instanceId: d.instanceId || uid(),
+          applicable: typeof d.applicable === 'boolean' ? d.applicable : true,
+          targetDate: d.targetDate || '',
+          repeatOfBlockId: d.repeatOfBlockId || block.id,
+          attempts: Array.isArray(d.attempts) ? d.attempts.map((a, idx) => ({
+            date: a.date || todayISO(),
+            percent: Number(a.percent || 0),
+            fulfilled: !!a.fulfilled,
+            repeat: !!a.repeat,
+            repeatDate: a.repeatDate || '',
+            selected: typeof a.selected === 'boolean' ? a.selected : idx === (d.attempts.length - 1)
+          })) : []
+        }));
       });
     }
 
@@ -755,6 +794,20 @@
 
     function setSelectedAttempt(plan, idx) {
       plan.attempts.forEach((a, i) => a.selected = i === idx);
+    }
+
+    function makePlanKey(blockId, dupId = 'base') {
+      return `${blockId}::${dupId}`;
+    }
+
+    function resolvePlanByKey(student, key) {
+      const [blockId, dupId] = String(key || '').split('::');
+      const base = state.studentPlans?.[student]?.[blockId];
+      if (!base) return null;
+      if (!dupId || dupId === 'base') return { blockId, plan: base, duplicate: null, isDuplicate: false };
+      const dup = (base.duplicates || []).find(d => d.instanceId === dupId);
+      if (!dup) return null;
+      return { blockId, plan: dup, duplicate: dup, isDuplicate: true };
     }
 
     function progressColorByAvg(avg) {
@@ -894,54 +947,38 @@
       const activeSubject = state.selectedSubjectByStudent[student];
       const subjectTabs = availableSubjects.map(s => `<button class="subject-tab-btn ${s===activeSubject?'active':''}" data-subject-tab="${escapeHtmlAttr(s)}">${escapeHtml(s)}</button>`).join('');
 
-      const rows = state.classPlan.filter(b => !activeSubject || b.subject === activeSubject).map(block => {
-        const plan = state.studentPlans[student][block.id] || { applicable: true, targetDate: '', attempts: [] };
-        const selectedAttempt = getSelectedAttempt(plan);
-        const collapsed = !plan.applicable && !plan.expanded;
-        const attemptItems = plan.attempts.map((a, idx) => `
-          <div class="attempt-item">
-            <label class="switch" title="Als aktiven Nachweis verwenden">
-              <input type="radio" name="selected-${block.id}" data-attempt-select="${block.id}" data-attempt-index="${idx}" ${a.selected ? 'checked' : ''}>
-              <span class="slider"></span>
-            </label>
-            <span>${a.date} · ${a.percent}% · ${a.fulfilled ? 'Erfüllt' : 'Nicht erfüllt'}</span>
-          </div>
-        `).join('') || '<div class="muted">Noch kein Lernnachweis gespeichert.</div>';
-        return `
-          <div class="lb-card">
-            <div class="lb-head">
-              <div class="lb-title">${escapeHtml(block.name)}</div>
-              <div class="lb-tools">
-                <span class="muted">aktiv</span>
-                <label class="switch"><input type="checkbox" data-plan-apply="${block.id}" ${plan.applicable ? 'checked' : ''}><span class="slider"></span></label>
-                <button class="small secondary" data-plan-expand="${block.id}">${plan.expanded ? 'Einklappen' : 'Aufklappen'}</button>
-              </div>
-            </div>
-            ${collapsed ? '<div class="muted" style="margin-top:6px;">Deaktiviert. Details eingeklappt.</div>' : `
-            <div class="lb-body compact">
+      const cards = [];
+      state.classPlan.filter(b => !activeSubject || b.subject === activeSubject).forEach(block => {
+        const basePlan = state.studentPlans[student][block.id] || { applicable: true, targetDate: '', attempts: [], duplicates: [] };
+        const variants = [{ plan: basePlan, key: makePlanKey(block.id, 'base'), isDuplicate: false }]
+          .concat((basePlan.duplicates || []).map(d => ({ plan: d, key: makePlanKey(block.id, d.instanceId), isDuplicate: true })));
+
+        variants.forEach(v => {
+          const selectedAttempt = getSelectedAttempt(v.plan);
+          cards.push(`
+            <div class="lb-card ${v.isDuplicate ? 'repeat-child' : ''}">
               <div class="lb-line">
-                <span title="Kalender">📅</span>
-                <input type="date" data-plan-date="${block.id}" value="${plan.targetDate || ''}">
-                <input class="weeks-mini" type="number" min="1" max="52" placeholder="X" data-plan-weeks="${block.id}">
-                <button class="small" data-set-weeks="${block.id}">+XW</button>
-                <input type="number" min="0" max="100" placeholder="%" data-attempt-pct="${block.id}">
-                <input type="date" data-attempt-date="${block.id}" value="${todayISO()}">
-                <select data-attempt-status="${block.id}"><option>Erfüllt</option><option>Nicht erfüllt</option></select>
-                <select data-attempt-repeat="${block.id}"><option value="nein">Wdh: Nein</option><option value="ja">Wdh: Ja</option></select>
-                <input type="date" data-attempt-repeat-date="${block.id}">
-                <input class="weeks-mini" type="number" min="1" max="52" placeholder="X" data-repeat-weeks="${block.id}">
-                <button class="small" data-set-repeat-weeks="${block.id}">Wdh +XW</button>
-                <button class="small success" data-save-attempt="${block.id}">Nachweis speichern</button>
+                <span class="lb-title">${escapeHtml(block.name)}</span>
+                ${v.isDuplicate ? '<span class="repeat-chip">↻ Wiederholung</span>' : ''}
+                <span title="Kalender">🗓</span>
+                <input type="date" data-plan-date="${v.key}" value="${v.plan.targetDate || ''}">
+                <input class="weeks-mini" type="number" min="1" max="52" placeholder="X" data-plan-weeks="${v.key}">
+                <button class="small" data-set-weeks="${v.key}">+XW</button>
+                <input type="number" min="0" max="100" placeholder="%" data-attempt-pct="${v.key}">
+                <input type="date" data-attempt-date="${v.key}" value="${todayISO()}">
+                <select data-attempt-status="${v.key}"><option>Erfüllt</option><option>Nicht erfüllt</option></select>
+                <button class="small success" data-save-attempt="${v.key}">Nachweis speichern</button>
+                <button class="small secondary" data-duplicate-block="${makePlanKey(block.id, v.isDuplicate ? v.plan.instanceId : 'base')}">Duplizieren</button>
               </div>
               <div class="muted">Aktiver Nachweis: ${selectedAttempt ? `${selectedAttempt.date}, ${selectedAttempt.percent}% (${selectedAttempt.fulfilled ? 'Erfüllt' : 'Nicht erfüllt'})` : 'noch keiner'}</div>
-              <div class="attempt-list">${attemptItems}</div>
-            </div>`}
-          </div>
-        `;
-      }).join('');
+            </div>
+          `);
+        });
+      });
+
       individualPlanTable.innerHTML = `
         <div class="subject-tabs">${subjectTabs || '<span class="muted">Keine Fächer vorhanden.</span>'}</div>
-        ${rows || '<div class="muted">Keine Lernbausteine im gewählten Fach.</div>'}
+        ${cards.join('') || '<div class="muted">Keine Lernbausteine im gewählten Fach.</div>'}
       `;
     }
 
@@ -972,7 +1009,11 @@
         const plan = state.studentPlans[student][block.id];
         if (!plan || !plan.applicable) return;
         if (!subjectMap[block.subject]) subjectMap[block.subject] = [];
-        subjectMap[block.subject].push({ block, plan });
+        subjectMap[block.subject].push({ block, plan, isDuplicate: false, repeatOfId: '' });
+        (plan.duplicates || []).forEach(dup => {
+          if (!dup.applicable) return;
+          subjectMap[block.subject].push({ block, plan: dup, isDuplicate: true, repeatOfId: block.id });
+        });
       });
 
       const cards = Object.entries(subjectMap).map(([subject, entries]) => {
@@ -1029,16 +1070,13 @@
         }
 
         const todayDate = new Date(today + 'T00:00:00');
-        const firstTarget = sortedEntries.find(e => e.plan.targetDate)?.plan.targetDate;
+        const timelineStartDate = new Date('2025-08-01T00:00:00');
+        const timelineEndDate = new Date('2026-07-31T00:00:00');
+        const todayPosPct = Math.max(0, Math.min(100, ((todayDate - timelineStartDate) / (timelineEndDate - timelineStartDate)) * 100));
         const lastTarget = [...sortedEntries].reverse().find(e => e.plan.targetDate)?.plan.targetDate;
-        const timelineStartDate = firstTarget ? new Date(firstTarget + 'T00:00:00') : todayDate;
-        const timelineEndDate = (() => {
-          if (!lastTarget) return todayDate;
-          const end = new Date(lastTarget + 'T00:00:00');
-          end.setDate(end.getDate() + 14);
-          return end;
-        })();
-        const todayPosPct = timelineEndDate <= timelineStartDate ? 100 : Math.max(0, Math.min(100, ((todayDate - timelineStartDate) / (timelineEndDate - timelineStartDate)) * 100));
+        const lastTargetDate = lastTarget ? new Date(lastTarget + 'T00:00:00') : todayDate;
+        const lastTargetPct = Math.max(0, Math.min(100, ((lastTargetDate - timelineStartDate) / (timelineEndDate - timelineStartDate)) * 100));
+        const progressWidthPct = Math.max(0, Math.min(todayPosPct, lastTargetPct));
 
         const intensityRatio = Math.max(0, Math.min(1, Math.abs(deltaPct) / Math.max(1, Number(state.maxIntensityPercent || 30))));
         const planTrackColor = timelineBehind
@@ -1056,8 +1094,9 @@
           return `
             <div class="timeline-bar-wrap" style="flex-grow:${weekWeight};" title="${escapeHtmlAttr(e.block.name)} – ${escapeHtmlAttr(label)}">
               <div><strong>${label}</strong></div>
+              ${e.isDuplicate ? '<div class="timeline-repeat-link"></div>' : ''}
               <div class="timeline-bar"><span style="height:${score.toFixed(1)}%;background:${barColor}"></span></div>
-              <div class="timeline-bar-label">LN ${idx + 1}</div>
+              <div class="timeline-bar-label">LN ${idx + 1}${e.isDuplicate ? " ↻" : ""}</div>
               <div class="timeline-date">${escapeHtml(displayDate)}</div>
             </div>
           `;
@@ -1081,7 +1120,7 @@
               <div class="timeline-bars-wrap">
                 <div class="timeline-bars">${timelineBars || '<span class="muted">Noch keine Nachweise.</span>'}</div>
                 <div class="timeline-today-line" style="left:${todayPosPct.toFixed(1)}%" title="Heutiges Datum"></div>
-                <div class="timeline-now-progress"><span style="width:${todayPosPct.toFixed(1)}%;background:${planTrackColor}"></span></div>
+                <div class="timeline-now-progress"><span style="width:${progressWidthPct.toFixed(1)}%;background:${planTrackColor}"></span></div>
               </div>
               <div class="muted" style="margin-top:6px;">LN = Lernnachweis, Balkenhöhe = erreichte Prozentzahl. Breite = erwartete Wochen. Linie = heutiges Datum.</div>
             </div>
@@ -1356,24 +1395,17 @@
 
       if (e.target.dataset.setWeeks) {
         const student = studentSelect.value;
-        const id = e.target.dataset.setWeeks;
-        const weeksInput = document.querySelector(`[data-plan-weeks="${id}"]`);
+        const key = e.target.dataset.setWeeks;
+        const weeksInput = document.querySelector(`[data-plan-weeks="${key}"]`);
         const weeks = Number(weeksInput.value || 0);
         if (!student || !weeks) return;
         ensureStudentPlan(student);
-        state.studentPlans[student][id].targetDate = addWeeks(todayISO(), weeks);
+        const resolved = resolvePlanByKey(student, key);
+        if (!resolved) return;
+        resolved.plan.targetDate = addWeeks(todayISO(), weeks);
         renderAll();
       }
 
-      if (e.target.dataset.setRepeatWeeks) {
-        const id = e.target.dataset.setRepeatWeeks;
-        const weeksInput = document.querySelector(`[data-repeat-weeks="${id}"]`);
-        const weeks = Number(weeksInput.value || 0);
-        if (!weeks) return;
-        const d = addWeeks(todayISO(), weeks);
-        const target = document.querySelector(`[data-attempt-repeat-date="${id}"]`);
-        if (target) target.value = d;
-      }
 
       if (e.target.dataset.attemptSelect) {
         const student = studentSelect.value || state.students[0];
@@ -1388,30 +1420,44 @@
         }
       }
 
-      if (e.target.dataset.saveAttempt) {
-        const student = studentSelect.value;
-        const id = e.target.dataset.saveAttempt;
+      if (e.target.dataset.duplicateBlock) {
+        const student = studentSelect.value || state.students[0];
         if (!student) return;
         ensureStudentPlan(student);
-        const pct = Number(document.querySelector(`[data-attempt-pct="${id}"]`).value || 0);
-        const date = document.querySelector(`[data-attempt-date="${id}"]`).value || todayISO();
-        const status = document.querySelector(`[data-attempt-status="${id}"]`).value;
-        const repeat = document.querySelector(`[data-attempt-repeat="${id}"]`).value === 'ja';
-        const repeatDate = document.querySelector(`[data-attempt-repeat-date="${id}"]`).value || '';
+        const resolved = resolvePlanByKey(student, e.target.dataset.duplicateBlock);
+        if (!resolved) return;
+        const base = state.studentPlans[student][resolved.blockId];
+        if (!Array.isArray(base.duplicates)) base.duplicates = [];
+        base.duplicates.push({
+          instanceId: uid(),
+          applicable: true,
+          targetDate: addWeeks(resolved.plan.targetDate || todayISO(), 2),
+          repeatOfBlockId: resolved.blockId,
+          attempts: []
+        });
+        renderAll();
+      }
 
-        state.studentPlans[student][id].attempts.push({
+      if (e.target.dataset.saveAttempt) {
+        const student = studentSelect.value;
+        const key = e.target.dataset.saveAttempt;
+        if (!student) return;
+        ensureStudentPlan(student);
+        const resolved = resolvePlanByKey(student, key);
+        if (!resolved) return;
+        const pct = Number(document.querySelector(`[data-attempt-pct="${key}"]`).value || 0);
+        const date = document.querySelector(`[data-attempt-date="${key}"]`).value || todayISO();
+        const status = document.querySelector(`[data-attempt-status="${key}"]`).value;
+
+        resolved.plan.attempts.push({
           date,
           percent: pct,
           fulfilled: status === 'Erfüllt',
-          repeat,
-          repeatDate,
+          repeat: false,
+          repeatDate: '',
           selected: true
         });
-        setSelectedAttempt(state.studentPlans[student][id], state.studentPlans[student][id].attempts.length - 1);
-
-        if (repeat && repeatDate) {
-          state.studentPlans[student][id].targetDate = repeatDate;
-        }
+        setSelectedAttempt(resolved.plan, resolved.plan.attempts.length - 1);
 
         logNotification(`Ereignis-Push simuliert: Nachweis für ${student} erfasst.`);
         renderAll();
@@ -1470,7 +1516,9 @@
 
       if (e.target.dataset.planDate && student) {
         ensureStudentPlan(student);
-        state.studentPlans[student][e.target.dataset.planDate].targetDate = e.target.value;
+        const resolved = resolvePlanByKey(student, e.target.dataset.planDate);
+        if (!resolved) return;
+        resolved.plan.targetDate = e.target.value;
       }
 
       if (['teacherName','stufe','maxIntensity'].includes(e.target.id)) {
