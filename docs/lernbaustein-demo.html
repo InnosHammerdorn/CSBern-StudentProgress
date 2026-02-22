@@ -9,25 +9,25 @@
       --escola-primary: #0f7ebd;
       --escola-primary-dark: #0a6294;
       --escola-accent: #12a4a8;
-      --bg: #f3f7fb;
+      --bg: #f2ece3;
       --card: #ffffff;
       --text: #213547;
       --muted: #6d7c8a;
-      --danger: #d8485f;
-      --success: #2f9f6e;
+      --danger: #c83c4a;
+      --success: #2f8f57;
       --border: #d8e2ec;
     }
 
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: "Segoe UI", Inter, Arial, sans-serif;
+      font-family: "Open Sans", "Segoe UI", Arial, sans-serif;
       color: var(--text);
-      background: linear-gradient(180deg, #eef5fb 0%, #f7fbff 100%);
+      background: linear-gradient(180deg, #f2ece3 0%, #f8f3ea 100%);
     }
 
     header {
-      background: linear-gradient(90deg, var(--escola-primary) 0%, var(--escola-accent) 100%);
+      background: var(--escola-primary);
       color: white;
       padding: 16px 24px;
       box-shadow: 0 4px 14px rgba(0,0,0,0.12);
@@ -160,7 +160,29 @@
       position: absolute;
       inset: 0 auto 0 0;
       width: 0%;
-      background: linear-gradient(90deg, #2c83cd 0%, #17b0a5 45%, #57c56a 100%);
+      background: #2f9f6e;
+    }
+    .overall-target-dot {
+      position:absolute;
+      top:50%;
+      width:14px;
+      height:14px;
+      border-radius:50%;
+      background:#0f7ebd;
+      border:2px solid #fff;
+      transform:translate(-50%,-50%);
+      box-shadow:0 0 0 1px #0f7ebd;
+    }
+    .overall-current-dot {
+      position:absolute;
+      top:50%;
+      width:12px;
+      height:12px;
+      border-radius:50%;
+      background:#0a6294;
+      border:2px solid #fff;
+      transform:translate(-50%,-50%);
+      box-shadow:0 0 0 1px #0a6294;
     }
 
     .donut {
@@ -252,37 +274,124 @@
 
     .attempt-list { margin-top: 6px; border-top: 1px dashed #d9e5f1; padding-top: 6px; }
     .attempt-item { display:flex; align-items:center; gap:8px; font-size:.84rem; margin-bottom:4px; }
-
-    .year-track { margin-top:8px; }
-    .track {
-      position: relative;
-      height: 16px;
+    .lb-line {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+    }
+    .block-create-box {
+      border: 2px solid #b9d4e8;
+      border-radius: 10px;
+      padding: 10px;
+      background: #f7fbff;
+      margin-top: 8px;
+    }
+    .lb-card.inactive { opacity: .55; filter: grayscale(.25); }
+    .lb-card.repeat-child {
+      border-left: 3px solid #5f8fb2;
+      background: #f8fbff;
+    }
+    .repeat-chip {
+      font-size: .74rem;
+      color: #2c5f84;
+      border: 1px solid #bfd4e6;
       border-radius: 999px;
-      background: #e5eef6;
-      border: 1px solid #d0deea;
-      overflow: visible;
+      padding: 1px 6px;
+      background: #edf6fd;
     }
-    .track-fill {
-      position:absolute; inset:0 auto 0 0; width:0%; border-radius:999px;
-      background: #a7d7a8;
+
+    .year-track { margin-top:10px; }
+    .timeline-status {
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: inline-block;
     }
-    .track-today-dot {
-      position:absolute;
-      top:50%;
-      width:12px;
-      height:12px;
-      border-radius:50%;
-      background:#18384d;
-      border:2px solid white;
-      transform: translate(-50%, -50%);
-      box-shadow:0 0 0 1px #17384d;
-      z-index:2;
+    .timeline-status.behind { background: #fdecec; color: #9b2635; border: 1px solid #f1c5cc; }
+    .timeline-status.ahead { background: #e9f7ef; color: #1f7c4c; border: 1px solid #bfe4cd; }
+    .timeline-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      min-height: 180px;
+      padding: 10px 6px 4px;
+      border: 1px solid #d2dfeb;
+      border-radius: 10px;
+      background: #f7fbff;
+      overflow: hidden;
     }
-    .track-seg {
-      position:absolute;
-      top:0;
-      height:100%;
-      border-radius:999px;
+    .timeline-bar-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 0;
+      flex: 1 1 0;
+      gap: 2px;
+    }
+    .timeline-bar {
+      width: 100%;
+      height: 116px;
+      border-radius: 5px 5px 2px 2px;
+      background: #dce8f3;
+      border: 1px solid #c4d4e3;
+      position: relative;
+      overflow: hidden;
+    }
+    .timeline-bar > span {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 0%;
+    }
+    .timeline-bar-label {
+      text-align: center;
+      font-size: 0.64rem;
+      color: #38556e;
+      line-height: 1.2;
+    }
+    .timeline-date {
+      font-size: 0.62rem;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .timeline-bars-wrap {
+      position: relative;
+      margin-top: 4px;
+    }
+    .timeline-today-line {
+      position: absolute;
+      top: 0;
+      bottom: 24px;
+      width: 6px;
+      border-radius: 999px;
+      background: var(--escola-primary);
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.9), 0 0 8px rgba(15, 126, 189, 0.45);
+      z-index: 4;
+      transform: translateX(-3px);
+      opacity: 0.95;
+      pointer-events: none;
+    }
+    .timeline-now-progress {
+      height: 12px;
+      margin-top: 6px;
+      border-radius: 999px;
+      border: 1px solid #c7d8e8;
+      background: #eaf1f8;
+      overflow: hidden;
+    }
+    .timeline-now-progress > span {
+      display: block;
+      height: 100%;
+      width: 0%;
+    }
+    .timeline-repeat-link {
+      width: 10px;
+      height: 2px;
+      background: #5f8fb2;
+      margin-bottom: 2px;
+      border-radius: 999px;
+      opacity: .85;
     }
     .progress-card {
       border: 1px solid var(--border);
@@ -291,6 +400,15 @@
       margin-bottom: 10px;
       transition: background 0.2s;
     }
+
+    .section-head {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-bottom: 6px;
+    }
+    .collapsible-content.hidden { display:none; }
 
     .notif-log {
       max-height: 200px;
@@ -341,8 +459,8 @@
     </div>
 
     <section id="jahresplan" class="tab-content active panel">
-      <h3>Fächer & Lernbausteine definieren</h3>
-      <p class="muted">Je Eintrag: Fach, Lernbaustein-Name, erwartete Wochen bis Nachweis.</p>
+      <div class="section-head"><h3 style="margin:0;">Fächer & Lernbausteine definieren</h3><button class="small secondary" data-toggle-section="blocksSection" data-toggle-label="Lernbausteine">Einklappen</button></div>
+      <div id="blocksSection" class="collapsible-content"><p class="muted">Je Eintrag: Fach, Lernbaustein-Name, erwartete Wochen bis Nachweis.</p>
       <div class="subject-row">
         <div>
           <label>Fachliste (separat)</label>
@@ -353,37 +471,41 @@
         </div>
         <div id="subjectBadges"></div>
       </div>
-      <div class="grid-3">
-        <div>
-          <label>Fach (aus Liste)</label>
-          <select id="newSubject"></select>
+      <div class="block-create-box">
+        <div class="grid-3">
+          <div>
+            <label>Fach (aus Liste)</label>
+            <select id="newSubject"></select>
+          </div>
+          <div>
+            <label>Lernbaustein</label>
+            <input id="newBlockName" placeholder="Bruchrechnen 1" />
+          </div>
+          <div>
+            <label>Erwartete Wochen</label>
+            <input id="newExpectedWeeks" type="number" min="1" max="52" value="2" />
+          </div>
         </div>
-        <div>
-          <label>Lernbaustein</label>
-          <input id="newBlockName" placeholder="Bruchrechnen 1" />
+        <div class="grid-2" style="margin-top:8px;">
+          <div>
+            <label>Vorheriger Lernbaustein (optional)</label>
+            <select id="newPreviousBlock"></select>
+          </div>
+          <div>
+            <label>Filter: nur Fach anzeigen</label>
+            <select id="classPlanFilterSubject"></select>
+          </div>
         </div>
-        <div>
-          <label>Erwartete Wochen</label>
-          <input id="newExpectedWeeks" type="number" min="1" max="52" value="2" />
+        <div class="actions" style="margin-top:8px;">
+          <button id="addBlockBtn">+ Lernbaustein hinzufügen</button>
         </div>
-      </div>
-      <div class="grid-2" style="margin-top:8px;">
-        <div>
-          <label>Vorheriger Lernbaustein (optional)</label>
-          <select id="newPreviousBlock"></select>
-        </div>
-        <div>
-          <label>Filter: nur Fach anzeigen</label>
-          <select id="classPlanFilterSubject"></select>
-        </div>
-      </div>
-      <div class="actions" style="margin-top:8px;">
-        <button id="addBlockBtn">+ Lernbaustein hinzufügen</button>
       </div>
       <table id="classPlanTable"></table>
+      </div>
 
       <hr style="border:none;border-top:1px solid var(--border);margin:16px 0;" />
-      <h3>Schülerliste</h3>
+      <div class="section-head"><h3 style="margin:0;">Schülerliste</h3><button class="small secondary" data-toggle-section="studentsSection" data-toggle-label="Schülerliste">Einklappen</button></div>
+      <div id="studentsSection" class="collapsible-content">
       <div class="grid-2">
         <div>
           <label>Schüler/in hinzufügen</label>
@@ -394,6 +516,7 @@
         </div>
       </div>
       <div id="studentBadges"></div>
+      </div>
     </section>
 
     <section id="individuell" class="tab-content panel">
@@ -403,7 +526,7 @@
           <label>Schüler/in</label>
           <select id="studentSelect"></select>
         </div>
-        <div class="muted" style="padding-top:24px;">📅 Datum direkt wählen oder „in X Woche(n)“ setzen.</div>
+        <div class="muted" style="padding-top:24px;">🗓 Datum direkt wählen oder „in X Woche(n)“ setzen.</div>
       </div>
       <table id="individualPlanTable"></table>
     </section>
@@ -466,21 +589,184 @@
     };
 
     function seededDemoData() {
+      const germanNames = [
+        'Wortarten und Satzglieder sicher bestimmen',
+        'Gross- und Kleinschreibung in Alltagstexten anwenden',
+        'Zeichensetzung bei Nebensätzen korrekt setzen',
+        'Direkte und indirekte Rede unterscheiden',
+        'Sachtexte: Kernaussagen markieren und gliedern',
+        'Sachtexte zusammenfassen (Einleitung, Kern, Schluss)',
+        'Argumente erkennen und begründen',
+        'Eigene Stellungnahmen mit Belegen verfassen',
+        'Erzählperspektiven in literarischen Texten analysieren',
+        'Figurencharakterisierung mit Textstellen schreiben',
+        'Spannungsbogen in Kurzgeschichten beschreiben',
+        'Gedichte: sprachliche Bilder deuten',
+        'Rhetorische Mittel in Reden identifizieren',
+        'Diskussionsbeiträge strukturiert formulieren',
+        'Präsentationsnotizen adressatengerecht verfassen',
+        'Recherchequellen prüfen und korrekt zitieren',
+        'Berichte sachlich und chronologisch schreiben',
+        'Protokolle vollständig und präzise verfassen',
+        'Bewerbungsschreiben und Lebenslauf erstellen',
+        'Formelle E-Mails situationsgerecht schreiben',
+        'Lesestrategien bei komplexen Texten einsetzen',
+        'Textvergleich: Gemeinsamkeiten und Unterschiede darlegen',
+        'Prüfungstraining Deutsch: Aufgabenformat sicher anwenden',
+        'Transferaufgabe: eigenes Dossier verfassen'
+      ];
+
+      const englishNames = [
+        'Classroom English und Präsensformen sicher anwenden',
+        'Question forms und short answers im Dialog nutzen',
+        'Reading for gist: Hauptaussagen schnell erfassen',
+        'Reading for detail: Informationen gezielt finden',
+        'Vocabulary building: school and hobbies',
+        'Past simple in narrativen Texten einsetzen',
+        'Past continuous in Geschichten passend verwenden',
+        'Email writing: polite openings and closings',
+        'Paragraph writing with topic sentences',
+        'Linking words for coherent writing',
+        'Listening: key information from interviews extract',
+        'Speaking: describing pictures with structure',
+        'Comparatives and superlatives in context',
+        'Future forms: will, going to, present continuous',
+        'Modal verbs for advice and obligation',
+        'Role play: giving directions and asking help',
+        'Project reading: nonfiction articles summarize',
+        'Debate language: agreeing and disagreeing',
+        'Presentation skills: signposting and transitions',
+        'Pronunciation clinic: stress and intonation',
+        'Exam reading strategies under time pressure',
+        'Exam writing: opinion paragraph with reasons',
+        'Integrated task: listen-read-write response',
+        'Final performance task: mini debate and reflection'
+      ];
+
+      const mathNames = [
+        'Zahlenmengen und Zahlengerade sicher anwenden',
+        'Grundoperationen mit ganzen Zahlen festigen',
+        'Brüche erweitern, kürzen und vergleichen',
+        'Brüche addieren und subtrahieren',
+        'Brüche multiplizieren und dividieren',
+        'Dezimalzahlen und Brüche umwandeln',
+        'Prozentbegriff und Grundwert berechnen',
+        'Prozent-, Rabatt- und Zinsaufgaben lösen',
+        'Terme vereinfachen und ausmultiplizieren',
+        'Lineare Gleichungen mit einer Variablen lösen',
+        'Textaufgaben in Gleichungen übersetzen',
+        'Koordinatensystem: Punkte und Geraden eintragen',
+        'Steigung und Achsenabschnitt verstehen',
+        'Proportionale und antiproportionale Zuordnungen',
+        'Dreiecke konstruieren und Eigenschaften benennen',
+        'Vierecke klassifizieren und begründen',
+        'Umfang und Flächeninhalt von Rechtecken',
+        'Flächeninhalt von Dreiecken und Parallelogrammen',
+        'Kreis: Umfang und Fläche berechnen',
+        'Volumen von Quadern und Würfeln',
+        'Daten erheben und in Tabellen darstellen',
+        'Diagramme lesen, erstellen und interpretieren',
+        'Mittelwert, Median und Spannweite bestimmen',
+        'Prüfungstraining Mathematik mit gemischten Aufgaben'
+      ];
+
+      function buildBlocks(subject, names) {
+        return names.map((name, idx) => ({
+          id: uid(),
+          subject,
+          name,
+          expectedWeeks: idx % 3 === 0 ? 3 : 2,
+          previousBlockId: ''
+        })).map((b, idx, arr) => ({
+          ...b,
+          previousBlockId: idx === 0 ? '' : arr[idx - 1].id
+        }));
+      }
+
+      const germanBlocks = buildBlocks('Deutsch', germanNames);
+      const englishBlocks = buildBlocks('Englisch', englishNames);
+      const mathBlocks = buildBlocks('Mathematik', mathNames);
+      const classPlan = [...germanBlocks, ...englishBlocks, ...mathBlocks];
+
+      function dateBySubjectIndex(subject, idx) {
+        const subjectStarts = {
+          'Deutsch': '2025-08-18',
+          'Englisch': '2025-08-25',
+          'Mathematik': '2025-09-01'
+        };
+        const base = new Date((subjectStarts[subject] || '2025-08-18') + 'T00:00:00');
+        base.setDate(base.getDate() + (idx * 14));
+        return base.toISOString().slice(0, 10);
+      }
+
+      function createStudentPlan(profile) {
+        const plans = {};
+        const subjectCounters = { Deutsch: 0, Englisch: 0, Mathematik: 0 };
+        classPlan.forEach((block) => {
+          const subjectIndex = subjectCounters[block.subject] || 0;
+          subjectCounters[block.subject] = subjectIndex + 1;
+          const targetDate = dateBySubjectIndex(block.subject, subjectIndex);
+          const doneCount = profile.doneBySubject[block.subject] || 0;
+          const isDone = subjectIndex < doneCount;
+          const percentBase = profile.baseBySubject[block.subject] || 60;
+          const variance = ((subjectIndex % 5) - 2) * profile.variance;
+          const percent = Math.max(35, Math.min(98, Math.round(percentBase + variance)));
+          const attemptDate = new Date(targetDate + 'T00:00:00');
+          attemptDate.setDate(attemptDate.getDate() + profile.dateOffsetDays);
+
+          plans[block.id] = {
+            applicable: true,
+            expanded: true,
+            targetDate,
+            attempts: isDone ? [{
+              date: attemptDate.toISOString().slice(0, 10),
+              percent,
+              fulfilled: percent >= 60,
+              repeat: percent < 60,
+              repeatDate: percent < 60 ? addWeeks(targetDate, 2) : '',
+              selected: true
+            }] : []
+          };
+        });
+        return plans;
+      }
+
+      const students = ['Lina Steiner', 'Noah Graf', 'Mia Keller'];
+      const studentPlans = {
+        'Lina Steiner': createStudentPlan({
+          doneBySubject: { Deutsch: 15, Englisch: 14, Mathematik: 16 },
+          baseBySubject: { Deutsch: 66, Englisch: 62, Mathematik: 64 },
+          variance: 5,
+          dateOffsetDays: 4
+        }),
+        'Noah Graf': createStudentPlan({
+          doneBySubject: { Deutsch: 9, Englisch: 8, Mathematik: 10 },
+          baseBySubject: { Deutsch: 54, Englisch: 50, Mathematik: 56 },
+          variance: 6,
+          dateOffsetDays: 11
+        }),
+        'Mia Keller': createStudentPlan({
+          doneBySubject: { Deutsch: 19, Englisch: 18, Mathematik: 20 },
+          baseBySubject: { Deutsch: 90, Englisch: 87, Mathematik: 91 },
+          variance: 4,
+          dateOffsetDays: -3
+        })
+      };
+
       return {
         teacherName: 'Frau Keller',
-        stufe: '7. Klasse',
+        stufe: '7. Klasse (Schuljahr 2025/26)',
         maxIntensityPercent: 30,
-        subjects: ['Mathematik', 'Deutsch'],
+        subjects: ['Deutsch', 'Englisch', 'Mathematik'],
         classPlanSubjectFilter: 'ALL',
-        classPlan: [
-          { id: uid(), subject: 'Mathematik', name: 'Bruchrechnen 1', expectedWeeks: 2, previousBlockId: '' },
-          { id: uid(), subject: 'Mathematik', name: 'Gleichungen', expectedWeeks: 2, previousBlockId: '' },
-          { id: uid(), subject: 'Deutsch', name: 'Leseverstehen', expectedWeeks: 3, previousBlockId: '' },
-          { id: uid(), subject: 'Deutsch', name: 'Argumentieren', expectedWeeks: 2, previousBlockId: '' }
-        ],
-        students: ['Lina Steiner', 'Noah Graf', 'Mia Keller'],
-        studentPlans: {},
-        selectedSubjectByStudent: {},
+        classPlan,
+        students,
+        studentPlans,
+        selectedSubjectByStudent: {
+          'Lina Steiner': 'Deutsch',
+          'Noah Graf': 'Deutsch',
+          'Mia Keller': 'Deutsch'
+        },
         notifications: [],
         lastWeeklyPushISO: null
       };
@@ -522,6 +808,21 @@
           repeatDate: a.repeatDate || '',
           selected: typeof a.selected === 'boolean' ? a.selected : idx === (p.attempts.length - 1)
         }));
+        if (!Array.isArray(p.duplicates)) p.duplicates = [];
+        p.duplicates = p.duplicates.map(d => ({
+          instanceId: d.instanceId || uid(),
+          applicable: typeof d.applicable === 'boolean' ? d.applicable : true,
+          targetDate: d.targetDate || '',
+          repeatOfBlockId: d.repeatOfBlockId || block.id,
+          attempts: Array.isArray(d.attempts) ? d.attempts.map((a, idx) => ({
+            date: a.date || todayISO(),
+            percent: Number(a.percent || 0),
+            fulfilled: !!a.fulfilled,
+            repeat: !!a.repeat,
+            repeatDate: a.repeatDate || '',
+            selected: typeof a.selected === 'boolean' ? a.selected : idx === (d.attempts.length - 1)
+          })) : []
+        }));
       });
     }
 
@@ -539,20 +840,28 @@
       plan.attempts.forEach((a, i) => a.selected = i === idx);
     }
 
+    function makePlanKey(blockId, dupId = 'base') {
+      return `${blockId}::${dupId}`;
+    }
+
+    function resolvePlanByKey(student, key) {
+      const [blockId, dupId] = String(key || '').split('::');
+      const base = state.studentPlans?.[student]?.[blockId];
+      if (!base) return null;
+      if (!dupId || dupId === 'base') return { blockId, plan: base, duplicate: null, isDuplicate: false };
+      const dup = (base.duplicates || []).find(d => d.instanceId === dupId);
+      if (!dup) return null;
+      return { blockId, plan: dup, duplicate: dup, isDuplicate: true };
+    }
+
     function progressColorByAvg(avg) {
       const score = Math.max(0, Math.min(100, Number(avg || 0)));
-      if (score >= 60) {
-        const t = (score - 60) / 40;
-        const r = Math.round(180 - 120 * t);
-        const g = Math.round(225 - 40 * t);
-        const b = Math.round(180 - 110 * t);
-        return `rgb(${r},${g},${b})`;
+      if (score < 60) {
+        const t = score / 60;
+        return `hsl(355, ${Math.round(86 - t * 14)}%, ${Math.round(42 + t * 8)}%)`;
       }
-      const t = score / 60;
-      const r = Math.round(235 - 25 * t);
-      const g = Math.round(172 - 70 * t);
-      const b = Math.round(172 - 80 * t);
-      return `rgb(${r},${g},${b})`;
+      const t = (score - 60) / 40;
+      return `hsl(132, ${Math.round(28 + t * 52)}%, ${Math.round(46 - t * 8)}%)`;
     }
 
     function saveState() {
@@ -676,54 +985,43 @@
       const activeSubject = state.selectedSubjectByStudent[student];
       const subjectTabs = availableSubjects.map(s => `<button class="subject-tab-btn ${s===activeSubject?'active':''}" data-subject-tab="${escapeHtmlAttr(s)}">${escapeHtml(s)}</button>`).join('');
 
-      const rows = state.classPlan.filter(b => !activeSubject || b.subject === activeSubject).map(block => {
-        const plan = state.studentPlans[student][block.id] || { applicable: true, targetDate: '', attempts: [] };
-        const selectedAttempt = getSelectedAttempt(plan);
-        const collapsed = !plan.applicable && !plan.expanded;
-        const attemptItems = plan.attempts.map((a, idx) => `
-          <div class="attempt-item">
-            <label class="switch" title="Als aktiven Nachweis verwenden">
-              <input type="radio" name="selected-${block.id}" data-attempt-select="${block.id}" data-attempt-index="${idx}" ${a.selected ? 'checked' : ''}>
-              <span class="slider"></span>
-            </label>
-            <span>${a.date} · ${a.percent}% · ${a.fulfilled ? 'Erfüllt' : 'Nicht erfüllt'}</span>
-          </div>
-        `).join('') || '<div class="muted">Noch kein Lernnachweis gespeichert.</div>';
-        return `
-          <div class="lb-card">
-            <div class="lb-head">
-              <div class="lb-title">${escapeHtml(block.name)}</div>
-              <div class="lb-tools">
-                <span class="muted">aktiv</span>
-                <label class="switch"><input type="checkbox" data-plan-apply="${block.id}" ${plan.applicable ? 'checked' : ''}><span class="slider"></span></label>
-                <button class="small secondary" data-plan-expand="${block.id}">${plan.expanded ? 'Einklappen' : 'Aufklappen'}</button>
-              </div>
-            </div>
-            ${collapsed ? '<div class="muted" style="margin-top:6px;">Deaktiviert. Details eingeklappt.</div>' : `
-            <div class="lb-body compact">
+      const cards = [];
+      state.classPlan.filter(b => !activeSubject || b.subject === activeSubject).forEach(block => {
+        const basePlan = state.studentPlans[student][block.id] || { applicable: true, targetDate: '', attempts: [], duplicates: [] };
+        const variants = [{ plan: basePlan, key: makePlanKey(block.id, 'base'), isDuplicate: false }]
+          .concat((basePlan.duplicates || []).map(d => ({ plan: d, key: makePlanKey(block.id, d.instanceId), isDuplicate: true })));
+
+        variants.forEach(v => {
+          const selectedAttempt = getSelectedAttempt(v.plan);
+          const hasAttempt = !!selectedAttempt;
+          const disabled = hasAttempt ? 'disabled' : '';
+          cards.push(`
+            <div class="lb-card ${v.isDuplicate ? 'repeat-child' : ''} ${v.plan.applicable ? '' : 'inactive'}">
               <div class="lb-line">
-                <span title="Kalender">📅</span>
-                <input type="date" data-plan-date="${block.id}" value="${plan.targetDate || ''}">
-                <input class="weeks-mini" type="number" min="1" max="52" placeholder="X" data-plan-weeks="${block.id}">
-                <button class="small" data-set-weeks="${block.id}">+XW</button>
-                <input type="number" min="0" max="100" placeholder="%" data-attempt-pct="${block.id}">
-                <input type="date" data-attempt-date="${block.id}" value="${todayISO()}">
-                <select data-attempt-status="${block.id}"><option>Erfüllt</option><option>Nicht erfüllt</option></select>
-                <select data-attempt-repeat="${block.id}"><option value="nein">Wdh: Nein</option><option value="ja">Wdh: Ja</option></select>
-                <input type="date" data-attempt-repeat-date="${block.id}">
-                <input class="weeks-mini" type="number" min="1" max="52" placeholder="X" data-repeat-weeks="${block.id}">
-                <button class="small" data-set-repeat-weeks="${block.id}">Wdh +XW</button>
-                <button class="small success" data-save-attempt="${block.id}">Nachweis speichern</button>
+                <label class="switch" title="Aktiv/Inaktiv"><input type="checkbox" data-plan-apply="${v.key}" ${v.plan.applicable ? 'checked' : ''}><span class="slider"></span></label>
+                <span class="lb-title">${escapeHtml(block.name)}</span>
+                ${v.isDuplicate ? '<span class="repeat-chip">↻ Wiederholung</span>' : ''}
+                <span title="Kalender">🗓</span>
+                <input type="date" data-plan-date="${v.key}" value="${v.plan.targetDate || ''}" ${disabled}>
+                <input class="weeks-mini" type="number" min="1" max="52" placeholder="X" data-plan-weeks="${v.key}" ${disabled}>
+                <button class="small" data-set-weeks="${v.key}" ${disabled}>+XW</button>
+                ${hasAttempt ? `<span class="badge">${selectedAttempt.percent}%</span><span class="muted">${selectedAttempt.fulfilled ? 'Erfüllt' : 'Nicht erfüllt'}</span>` : `
+                <input type="number" min="0" max="100" placeholder="%" data-attempt-pct="${v.key}" ${disabled}>
+                <input type="date" data-attempt-date="${v.key}" value="${todayISO()}" ${disabled}>
+                <select data-attempt-status="${v.key}" ${disabled}><option>Erfüllt</option><option>Nicht erfüllt</option></select>
+                <button class="small success" data-save-attempt="${v.key}" ${disabled}>Nachweis speichern</button>`}
+                <button class="small secondary" data-duplicate-block="${v.key}">Duplizieren</button>
+                ${v.isDuplicate ? `<button class="small secondary" data-delete-duplicate="${v.key}">x</button>` : ''}
               </div>
               <div class="muted">Aktiver Nachweis: ${selectedAttempt ? `${selectedAttempt.date}, ${selectedAttempt.percent}% (${selectedAttempt.fulfilled ? 'Erfüllt' : 'Nicht erfüllt'})` : 'noch keiner'}</div>
-              <div class="attempt-list">${attemptItems}</div>
-            </div>`}
-          </div>
-        `;
-      }).join('');
+            </div>
+          `);
+        });
+      });
+
       individualPlanTable.innerHTML = `
         <div class="subject-tabs">${subjectTabs || '<span class="muted">Keine Fächer vorhanden.</span>'}</div>
-        ${rows || '<div class="muted">Keine Lernbausteine im gewählten Fach.</div>'}
+        ${cards.join('') || '<div class="muted">Keine Lernbausteine im gewählten Fach.</div>'}
       `;
     }
 
@@ -735,26 +1033,38 @@
       }
       ensureStudentPlan(student);
 
-      const allApplicable = state.classPlan.filter(block => {
+      const allPossibleEntries = [];
+      state.classPlan.forEach(block => {
         const p = state.studentPlans[student][block.id];
-        return p && p.applicable;
+        if (!p) return;
+        allPossibleEntries.push({ block, plan: p });
+        (p.duplicates || []).forEach(d => allPossibleEntries.push({ block, plan: d }));
       });
-      const yearShould = allApplicable.filter(block => {
-        const p = state.studentPlans[student][block.id];
-        return p.targetDate && p.targetDate <= todayISO();
+      const allApplicable = allPossibleEntries.filter(e => e.plan && e.plan.applicable);
+      const yearTargetCount = allApplicable.length;
+      const yearFulfilled = allApplicable.filter(e => {
+        const a = getSelectedAttempt(e.plan);
+        return a && a.fulfilled && Number(a.percent) >= 60;
       }).length;
-      const yearDone = allApplicable.filter(block => {
-        const p = state.studentPlans[student][block.id];
-        return p.attempts.length > 0;
-      }).length;
-      const yearPct = yearShould === 0 ? (yearDone > 0 ? 100 : 0) : Math.max(0, Math.min(100, (yearDone / yearShould) * 100));
+      const yearDoneNow = allApplicable.filter(e => !!getSelectedAttempt(e.plan)).length;
+      const yearShouldNow = allApplicable.filter(e => e.plan.targetDate && e.plan.targetDate <= todayISO()).length;
+      const totalPossible = allPossibleEntries.length || 1;
+      const yearPct = yearTargetCount === 0 ? 0 : Math.max(0, Math.min(100, (yearFulfilled / yearTargetCount) * 100));
+      const yearTargetPct = Math.max(0, Math.min(100, (yearTargetCount / totalPossible) * 100));
+      const yearCurrentPct = yearTargetCount === 0 ? 0 : Math.max(0, Math.min(100, (yearShouldNow / yearTargetCount) * 100));
+      const yearOnTrack = yearDoneNow >= yearShouldNow;
+      const yearBarColor = yearOnTrack ? 'var(--success)' : 'var(--danger)';
 
       const subjectMap = {};
       state.classPlan.forEach(block => {
         const plan = state.studentPlans[student][block.id];
         if (!plan || !plan.applicable) return;
         if (!subjectMap[block.subject]) subjectMap[block.subject] = [];
-        subjectMap[block.subject].push({ block, plan });
+        subjectMap[block.subject].push({ block, plan, isDuplicate: false, repeatOfId: '' });
+        (plan.duplicates || []).forEach(dup => {
+          if (!dup.applicable) return;
+          subjectMap[block.subject].push({ block, plan: dup, isDuplicate: true, repeatOfId: block.id });
+        });
       });
 
       const cards = Object.entries(subjectMap).map(([subject, entries]) => {
@@ -766,7 +1076,7 @@
 
         const today = todayISO();
         const shouldHave = entries.filter(e => e.plan.targetDate && e.plan.targetDate <= today).length;
-        const performed = entries.filter(e => e.plan.attempts.length > 0).length;
+        const performed = entries.filter(e => { const a=getSelectedAttempt(e.plan); return !!a; }).length;
         const deltaPct = shouldHave === 0 ? (performed > 0 ? 100 : 0) : ((performed - shouldHave) / shouldHave) * 100;
 
         const overdue = entries
@@ -774,25 +1084,81 @@
           .map(e => e.block.name);
 
         const avgColor = progressColorByAvg(avg);
-        const nowPos = (() => {
-          const d = new Date();
-          const yearStart = new Date(d.getFullYear(), 0, 1);
-          const yearEnd = new Date(d.getFullYear(), 11, 31);
-          return Math.max(0, Math.min(100, ((d - yearStart) / (yearEnd - yearStart)) * 100));
-        })();
-        const totalWeeks = Math.max(1, entries.reduce((s, e) => s + Number(e.block.expectedWeeks || 1), 0));
-        const completedWeeks = entries
-          .filter(e => e.plan.attempts.length > 0)
-          .reduce((s, e) => s + Number(e.block.expectedWeeks || 1), 0);
-        const donePctYear = Math.max(0, Math.min(100, (completedWeeks / totalWeeks) * 100));
-        const lagging = donePctYear < nowPos;
+        const sortedEntries = [...entries].sort((a, b) => {
+          const aSel = getSelectedAttempt(a.plan);
+          const bSel = getSelectedAttempt(b.plan);
+          const aKey = (aSel && aSel.date) ? aSel.date : (a.plan.targetDate || '9999-12-31');
+          const bKey = (bSel && bSel.date) ? bSel.date : (b.plan.targetDate || '9999-12-31');
+          return aKey.localeCompare(bKey);
+        });
+        const expectedUpToToday = sortedEntries.filter(e => e.plan.targetDate && e.plan.targetDate <= today).length;
+        const achievedUpToToday = sortedEntries.filter(e => {
+          const selected = getSelectedAttempt(e.plan);
+          return selected && selected.date <= today;
+        }).length;
+        const timelineBehind = achievedUpToToday < expectedUpToToday;
+        const statusClass = timelineBehind ? 'behind' : 'ahead';
+        const statusText = timelineBehind
+          ? `Hinter dem Plan: ${achievedUpToToday} von ${expectedUpToToday} fälligen Nachweisen erfasst`
+          : `Im/über Plan: ${achievedUpToToday} Nachweise bis heute erfasst (fällig: ${expectedUpToToday})`;
 
-        const timelineSegments = lagging
-          ? `
-            <div class="track-seg" style="left:0;width:${donePctYear.toFixed(1)}%;background:#4f5e69"></div>
-            <div class="track-seg" style="left:${donePctYear.toFixed(1)}%;width:${(nowPos-donePctYear).toFixed(1)}%;background:#e58b8b"></div>
-          `
-          : `<div class="track-seg" style="left:0;width:${donePctYear.toFixed(1)}%;background:#59b774"></div>`;
+        function scoreBarColor(score, hasAttempt) {
+          if (!hasAttempt) return '#b8c5d1';
+          if (score < 50) {
+            const t = score / 50;
+            const sat = Math.round(70 + ((1 - t) * 20));
+            const light = Math.round(48 - ((1 - t) * 8));
+            return `hsl(0, ${sat}%, ${light}%)`;
+          }
+          if (score < 60) {
+            const t = (score - 50) / 10;
+            const hue = Math.round(8 + (t * 37));
+            return `hsl(${hue}, 78%, 46%)`;
+          }
+          const t = (score - 60) / 40;
+          const sat = Math.round(22 + (t * 68));
+          const light = Math.round(46 - (t * 8));
+          return `hsl(122, ${sat}%, ${light}%)`;
+        }
+
+        const todayDate = new Date(today + 'T00:00:00');
+        const timelineStartDate = new Date('2025-08-01T00:00:00');
+        const timelineEndDate = new Date('2026-07-31T00:00:00');
+        const todayPosPct = Math.max(0, Math.min(100, ((todayDate - timelineStartDate) / (timelineEndDate - timelineStartDate)) * 100));
+        const lastSuccessful = [...sortedEntries].reverse().find(e => {
+          const a = getSelectedAttempt(e.plan);
+          return a && a.fulfilled && Number(a.percent) >= 60;
+        });
+        const lastSuccessfulAttempt = lastSuccessful ? getSelectedAttempt(lastSuccessful.plan) : null;
+        const lastSuccessfulDate = lastSuccessfulAttempt
+          ? new Date((lastSuccessfulAttempt.date || today) + 'T00:00:00')
+          : timelineStartDate;
+        const lastSuccessfulPct = Math.max(0, Math.min(100, ((lastSuccessfulDate - timelineStartDate) / (timelineEndDate - timelineStartDate)) * 100));
+        const progressWidthPct = lastSuccessful ? lastSuccessfulPct : 0;
+
+        const intensityRatio = Math.max(0, Math.min(1, Math.abs(deltaPct) / Math.max(1, Number(state.maxIntensityPercent || 30))));
+        const planTrackColor = timelineBehind
+          ? `hsl(0, ${Math.round(40 + intensityRatio * 50)}%, ${Math.round(86 - intensityRatio * 28)}%)`
+          : `hsl(122, ${Math.round(25 + intensityRatio * 55)}%, ${Math.round(86 - intensityRatio * 28)}%)`;
+
+        const timelineBars = sortedEntries.map((e, idx) => {
+          const selected = getSelectedAttempt(e.plan);
+          const hasAttempt = !!selected;
+          const score = Math.max(0, Math.min(100, Number(selected ? selected.percent : 0)));
+          const barColor = scoreBarColor(score, hasAttempt);
+          const label = hasAttempt ? `${selected.percent}%` : 'offen';
+          const displayDate = hasAttempt ? selected.date : (e.plan.targetDate || 'kein Datum');
+          const weekWeight = Math.max(1, Number(e.block.expectedWeeks || 1));
+          return `
+            <div class="timeline-bar-wrap" style="flex-grow:${weekWeight};" title="${escapeHtmlAttr(e.block.name)} – ${escapeHtmlAttr(label)}">
+              <div><strong>${label}</strong></div>
+              ${e.isDuplicate ? '<div class="timeline-repeat-link"></div>' : ''}
+              <div class="timeline-bar"><span style="height:${score.toFixed(1)}%;background:${barColor}"></span></div>
+              <div class="timeline-bar-label">LN ${idx + 1}${e.isDuplicate ? " ↻" : ""}</div>
+              <div class="timeline-date">${escapeHtml(displayDate)}</div>
+            </div>
+          `;
+        }).join('');
 
         return `
           <div class="progress-card">
@@ -808,11 +1174,13 @@
             <div style="margin-top:4px;">Soll erledigt / Ist erledigt: <strong>${shouldHave}</strong> / ${performed}</div>
             <div>Planabweichung: <strong>${deltaPct.toFixed(1)}%</strong></div>
             <div class="year-track">
-              <div class="track">
-                ${timelineSegments}
-                <div class="track-today-dot" style="left:${nowPos.toFixed(1)}%"></div>
+              <div class="timeline-status ${statusClass}">${statusText}</div>
+              <div class="timeline-bars-wrap">
+                <div class="timeline-bars">${timelineBars || '<span class="muted">Noch keine Nachweise.</span>'}</div>
+                <div class="timeline-today-line" style="left:${todayPosPct.toFixed(1)}%" title="Heutiges Datum"></div>
+                <div class="timeline-now-progress"><span style="width:${progressWidthPct.toFixed(1)}%;background:${planTrackColor}"></span></div>
               </div>
-              <div class="muted">Jahr (wochenbasiert): erledigt ${donePctYear.toFixed(1)}%, heute ${nowPos.toFixed(1)}%</div>
+              <div class="muted" style="margin-top:6px;">LN = Lernnachweis, Balkenhöhe = erreichte Prozentzahl. Breite = erwartete Wochen. Linie = heutiges Datum.</div>
             </div>
             <div class="muted">Überfällig: ${overdue.length ? escapeHtml(overdue.join(', ')) : 'keine'}</div>
           </div>
@@ -823,10 +1191,10 @@
         <div class="overall-wrap">
           <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
             <strong>Jahresfortschritt (alle Fächer)</strong>
-            <span class="muted">Soll ${yearShould} / Ist ${yearDone}</span>
+            <span class="muted">Ist ${yearDoneNow} / Soll bis heute ${yearShouldNow} • Erfüllt ${yearFulfilled} / Ziel ${yearTargetCount}</span>
           </div>
-          <div class="overall-bar" style="margin-top:8px;"><span style="width:${yearPct.toFixed(1)}%"></span></div>
-          <div class="muted" style="margin-top:5px;">${yearPct.toFixed(1)}% des Jahresplans erreicht</div>
+          <div class="overall-bar" style="margin-top:8px;"><span style="width:${yearPct.toFixed(1)}%;background:${yearBarColor}"></span><div class="overall-current-dot" style="left:${yearCurrentPct.toFixed(1)}%" title="Heutiger Soll-Stand"></div><div class="overall-target-dot" style="left:${yearTargetPct.toFixed(1)}%" title="Individuelles Ziel"></div></div>
+          <div class="muted" style="margin-top:5px;">Jahresfortschritt ${yearPct.toFixed(1)}% • ${yearOnTrack ? 'Im/über Soll bis heute' : 'Unter Soll bis heute'} • Zielmarke bei ${yearTargetPct.toFixed(1)}% aller Lernbausteine</div>
         </div>
         ${cards || '<p class="muted">Für diese/n Schüler/in sind keine relevanten Lernbausteine aktiv.</p>'}
       `;
@@ -1065,6 +1433,16 @@
         renderAll();
       }
 
+      if (e.target.dataset.toggleSection) {
+        const sectionId = e.target.dataset.toggleSection;
+        const label = e.target.dataset.toggleLabel || 'Bereich';
+        const el = document.getElementById(sectionId);
+        if (!el) return;
+        el.classList.toggle('hidden');
+        e.target.textContent = el.classList.contains('hidden') ? 'Ausklappen' : 'Einklappen';
+        e.target.setAttribute('aria-expanded', String(!el.classList.contains('hidden')));
+      }
+
       if (e.target.dataset.subjectTab) {
         const student = studentSelect.value || state.students[0];
         if (student) {
@@ -1085,24 +1463,17 @@
 
       if (e.target.dataset.setWeeks) {
         const student = studentSelect.value;
-        const id = e.target.dataset.setWeeks;
-        const weeksInput = document.querySelector(`[data-plan-weeks="${id}"]`);
+        const key = e.target.dataset.setWeeks;
+        const weeksInput = document.querySelector(`[data-plan-weeks="${key}"]`);
         const weeks = Number(weeksInput.value || 0);
         if (!student || !weeks) return;
         ensureStudentPlan(student);
-        state.studentPlans[student][id].targetDate = addWeeks(todayISO(), weeks);
+        const resolved = resolvePlanByKey(student, key);
+        if (!resolved) return;
+        resolved.plan.targetDate = addWeeks(todayISO(), weeks);
         renderAll();
       }
 
-      if (e.target.dataset.setRepeatWeeks) {
-        const id = e.target.dataset.setRepeatWeeks;
-        const weeksInput = document.querySelector(`[data-repeat-weeks="${id}"]`);
-        const weeks = Number(weeksInput.value || 0);
-        if (!weeks) return;
-        const d = addWeeks(todayISO(), weeks);
-        const target = document.querySelector(`[data-attempt-repeat-date="${id}"]`);
-        if (target) target.value = d;
-      }
 
       if (e.target.dataset.attemptSelect) {
         const student = studentSelect.value || state.students[0];
@@ -1117,30 +1488,54 @@
         }
       }
 
-      if (e.target.dataset.saveAttempt) {
-        const student = studentSelect.value;
-        const id = e.target.dataset.saveAttempt;
+      if (e.target.dataset.duplicateBlock) {
+        const student = studentSelect.value || state.students[0];
         if (!student) return;
         ensureStudentPlan(student);
-        const pct = Number(document.querySelector(`[data-attempt-pct="${id}"]`).value || 0);
-        const date = document.querySelector(`[data-attempt-date="${id}"]`).value || todayISO();
-        const status = document.querySelector(`[data-attempt-status="${id}"]`).value;
-        const repeat = document.querySelector(`[data-attempt-repeat="${id}"]`).value === 'ja';
-        const repeatDate = document.querySelector(`[data-attempt-repeat-date="${id}"]`).value || '';
+        const resolved = resolvePlanByKey(student, e.target.dataset.duplicateBlock);
+        if (!resolved) return;
+        const base = state.studentPlans[student][resolved.blockId];
+        if (!Array.isArray(base.duplicates)) base.duplicates = [];
+        base.duplicates.push({
+          instanceId: uid(),
+          applicable: true,
+          targetDate: addWeeks(resolved.plan.targetDate || todayISO(), 2),
+          repeatOfBlockId: resolved.blockId,
+          attempts: []
+        });
+        renderAll();
+      }
 
-        state.studentPlans[student][id].attempts.push({
+      if (e.target.dataset.deleteDuplicate) {
+        const student = studentSelect.value || state.students[0];
+        if (!student) return;
+        const [blockId, dupId] = String(e.target.dataset.deleteDuplicate).split('::');
+        const base = state.studentPlans?.[student]?.[blockId];
+        if (!base || !Array.isArray(base.duplicates)) return;
+        base.duplicates = base.duplicates.filter(d => d.instanceId !== dupId);
+        renderAll();
+      }
+
+      if (e.target.dataset.saveAttempt) {
+        const student = studentSelect.value;
+        const key = e.target.dataset.saveAttempt;
+        if (!student) return;
+        ensureStudentPlan(student);
+        const resolved = resolvePlanByKey(student, key);
+        if (!resolved) return;
+        const pct = Number(document.querySelector(`[data-attempt-pct="${key}"]`).value || 0);
+        const date = document.querySelector(`[data-attempt-date="${key}"]`).value || todayISO();
+        const status = document.querySelector(`[data-attempt-status="${key}"]`).value;
+
+        resolved.plan.attempts.push({
           date,
           percent: pct,
           fulfilled: status === 'Erfüllt',
-          repeat,
-          repeatDate,
+          repeat: false,
+          repeatDate: '',
           selected: true
         });
-        setSelectedAttempt(state.studentPlans[student][id], state.studentPlans[student][id].attempts.length - 1);
-
-        if (repeat && repeatDate) {
-          state.studentPlans[student][id].targetDate = repeatDate;
-        }
+        setSelectedAttempt(resolved.plan, resolved.plan.attempts.length - 1);
 
         logNotification(`Ereignis-Push simuliert: Nachweis für ${student} erfasst.`);
         renderAll();
@@ -1192,14 +1587,16 @@
 
       if (e.target.dataset.planApply && student) {
         ensureStudentPlan(student);
-        const p = state.studentPlans[student][e.target.dataset.planApply];
-        p.applicable = e.target.checked;
-        if (!p.applicable) p.expanded = false;
+        const resolved = resolvePlanByKey(student, e.target.dataset.planApply);
+        if (!resolved) return;
+        resolved.plan.applicable = e.target.checked;
       }
 
       if (e.target.dataset.planDate && student) {
         ensureStudentPlan(student);
-        state.studentPlans[student][e.target.dataset.planDate].targetDate = e.target.value;
+        const resolved = resolvePlanByKey(student, e.target.dataset.planDate);
+        if (!resolved) return;
+        resolved.plan.targetDate = e.target.value;
       }
 
       if (['teacherName','stufe','maxIntensity'].includes(e.target.id)) {
