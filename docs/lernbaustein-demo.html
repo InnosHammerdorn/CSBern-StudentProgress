@@ -317,11 +317,13 @@
       position: absolute;
       top: 0;
       bottom: 24px;
-      width: 2px;
-      background: #17384d;
+      width: 6px;
+      border-radius: 999px;
+      background: var(--escola-primary);
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.9), 0 0 8px rgba(15, 126, 189, 0.45);
       z-index: 4;
-      transform: translateX(-1px);
-      opacity: 0.8;
+      transform: translateX(-3px);
+      opacity: 0.95;
       pointer-events: none;
     }
     .timeline-now-progress {
@@ -618,18 +620,25 @@
       const mathBlocks = buildBlocks('Mathematik', mathNames);
       const classPlan = [...germanBlocks, ...englishBlocks, ...mathBlocks];
 
-      function dateByIndex(idx) {
-        const base = new Date('2025-08-18T00:00:00');
-        base.setDate(base.getDate() + (idx * 7));
+      function dateBySubjectIndex(subject, idx) {
+        const subjectStarts = {
+          'Deutsch': '2025-08-18',
+          'Englisch': '2025-08-25',
+          'Mathematik': '2025-09-01'
+        };
+        const base = new Date((subjectStarts[subject] || '2025-08-18') + 'T00:00:00');
+        base.setDate(base.getDate() + (idx * 14));
         return base.toISOString().slice(0, 10);
       }
 
       function createStudentPlan(profile) {
         const plans = {};
-        classPlan.forEach((block, idx) => {
-          const targetDate = dateByIndex(idx);
+        const subjectCounters = { Deutsch: 0, Englisch: 0, Mathematik: 0 };
+        classPlan.forEach((block) => {
+          const subjectIndex = subjectCounters[block.subject] || 0;
+          subjectCounters[block.subject] = subjectIndex + 1;
+          const targetDate = dateBySubjectIndex(block.subject, subjectIndex);
           const doneCount = profile.doneBySubject[block.subject] || 0;
-          const subjectIndex = idx % 24;
           const isDone = subjectIndex < doneCount;
           const percentBase = profile.baseBySubject[block.subject] || 60;
           const variance = ((subjectIndex % 5) - 2) * profile.variance;
@@ -657,19 +666,19 @@
       const students = ['Lina Steiner', 'Noah Graf', 'Mia Keller'];
       const studentPlans = {
         'Lina Steiner': createStudentPlan({
-          doneBySubject: { Deutsch: 20, Englisch: 18, Mathematik: 19 },
+          doneBySubject: { Deutsch: 15, Englisch: 14, Mathematik: 16 },
           baseBySubject: { Deutsch: 66, Englisch: 62, Mathematik: 64 },
           variance: 5,
           dateOffsetDays: 4
         }),
         'Noah Graf': createStudentPlan({
-          doneBySubject: { Deutsch: 15, Englisch: 13, Mathematik: 14 },
+          doneBySubject: { Deutsch: 9, Englisch: 8, Mathematik: 10 },
           baseBySubject: { Deutsch: 54, Englisch: 50, Mathematik: 56 },
           variance: 6,
           dateOffsetDays: 11
         }),
         'Mia Keller': createStudentPlan({
-          doneBySubject: { Deutsch: 24, Englisch: 24, Mathematik: 24 },
+          doneBySubject: { Deutsch: 19, Englisch: 18, Mathematik: 20 },
           baseBySubject: { Deutsch: 90, Englisch: 87, Mathematik: 91 },
           variance: 4,
           dateOffsetDays: -3
