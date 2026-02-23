@@ -467,6 +467,15 @@
       transition: background 0.2s;
     }
 
+    .section-head {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-bottom: 6px;
+    }
+    .collapsible-content.hidden { display:none; }
+
     .notif-log {
       max-height: 200px;
       overflow: auto;
@@ -516,8 +525,8 @@
     </div>
 
     <section id="jahresplan" class="tab-content active panel">
-      <h3>Fächer & Lernbausteine definieren</h3>
-      <p class="muted">Je Eintrag: Fach, Lernbaustein-Name, erwartete Wochen bis Nachweis.</p>
+      <div class="section-head"><h3 style="margin:0;">Fächer & Lernbausteine definieren</h3><button class="small secondary" data-toggle-section="blocksSection" data-toggle-label="Lernbausteine">Einklappen</button></div>
+      <div id="blocksSection" class="collapsible-content"><p class="muted">Je Eintrag: Fach, Lernbaustein-Name, erwartete Wochen bis Nachweis.</p>
       <div class="subject-row">
         <div>
           <label>Fachliste (separat)</label>
@@ -558,9 +567,11 @@
         </div>
       </div>
       <table id="classPlanTable"></table>
+      </div>
 
       <hr style="border:none;border-top:1px solid var(--border);margin:16px 0;" />
-      <h3>Schülerliste</h3>
+      <div class="section-head"><h3 style="margin:0;">Schülerliste</h3><button class="small secondary" data-toggle-section="studentsSection" data-toggle-label="Schülerliste">Einklappen</button></div>
+      <div id="studentsSection" class="collapsible-content">
       <div class="grid-2">
         <div>
           <label>Schüler/in hinzufügen</label>
@@ -571,6 +582,7 @@
         </div>
       </div>
       <div id="studentBadges"></div>
+      </div>
     </section>
 
     <section id="individuell" class="tab-content panel">
@@ -1572,6 +1584,16 @@
         if (used) return alert('Fach wird in Lernbausteinen verwendet und kann nicht entfernt werden.');
         state.subjects = state.subjects.filter(x => x !== s);
         renderAll();
+      }
+
+      if (e.target.dataset.toggleSection) {
+        const sectionId = e.target.dataset.toggleSection;
+        const label = e.target.dataset.toggleLabel || 'Bereich';
+        const el = document.getElementById(sectionId);
+        if (!el) return;
+        el.classList.toggle('hidden');
+        e.target.textContent = el.classList.contains('hidden') ? 'Ausklappen' : 'Einklappen';
+        e.target.setAttribute('aria-expanded', String(!el.classList.contains('hidden')));
       }
 
       if (e.target.dataset.subjectTab) {
