@@ -370,18 +370,21 @@
     }
     .timeline-bar-status {
       position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%) rotate(-90deg);
-      transform-origin: center;
-      font-size: 0.64rem;
+      inset: 6px 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      font-size: 0.58rem;
       font-weight: 700;
-      letter-spacing: 0.02em;
+      letter-spacing: 0.01em;
       color: #28465e;
       text-shadow: 0 1px 0 rgba(255,255,255,0.75);
       pointer-events: none;
       white-space: nowrap;
       z-index: 2;
+      overflow: hidden;
     }
     .timeline-bar-label {
       text-align: center;
@@ -1197,7 +1200,7 @@
         const successAttempts = activeEntries.map(e => getSuccessAttempt(e.plan)).filter(Boolean);
         const attempted = activeEntries.reduce((n, e) => n + e.plan.attempts.length, 0);
         const succeeded = successAttempts.length;
-        const allAttemptPercents = activeEntries.flatMap(e => (Array.isArray(e.plan.attempts) ? e.plan.attempts : []).map(a => Number(a.percent)));
+        const allAttemptPercents = entries.flatMap(e => (Array.isArray(e.plan.attempts) ? e.plan.attempts : []).map(a => Number(a.percent)).filter(Number.isFinite));
         const avg = allAttemptPercents.length ? (allAttemptPercents.reduce((a,b)=>a+b,0) / allAttemptPercents.length) : 0;
 
         const today = todayISO();
@@ -1289,10 +1292,10 @@
           const hasAttempt = !!selected;
           const score = Math.max(0, Math.min(100, Number(selected ? selected.percent : 0)));
           const isInactive = !e.plan.applicable;
-          const isDueOpen = !isInactive && timelineBehind && !selected && e.plan.targetDate && e.plan.targetDate <= today;
+          const isDueOpen = !isInactive && !selected && e.plan.targetDate && e.plan.targetDate <= today;
           const displayScore = isDueOpen ? 100 : score;
-          const barColor = isDueOpen ? '#c65a5a' : scoreBarColor(displayScore, hasAttempt);
-          const label = isInactive ? 'deaktiviert' : (hasAttempt ? `${selected.percent}%` : 'offen');
+          const barColor = isDueOpen ? '#d07a7a' : scoreBarColor(displayScore, hasAttempt);
+          const label = isInactive ? 'deakt.' : (hasAttempt ? `${selected.percent}%` : 'offen');
           const displayDate = hasAttempt ? selected.date : (e.plan.targetDate || 'kein Datum');
           const weekWeight = Math.max(1, Number(e.block.expectedWeeks || 1));
           const failedAttemptChips = failedAttempts.map(a => {
