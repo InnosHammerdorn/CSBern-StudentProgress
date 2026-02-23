@@ -358,7 +358,7 @@
       content: '';
       position: absolute;
       inset: 0;
-      background: linear-gradient(135deg, transparent 45%, rgba(120, 120, 120, 0.8) 49%, rgba(120, 120, 120, 0.8) 51%, transparent 55%);
+      background: linear-gradient(135deg, transparent 49.2%, rgba(70, 76, 84, 0.92) 49.7%, rgba(70, 76, 84, 0.92) 50.3%, transparent 50.8%);
       pointer-events: none;
     }
     .timeline-bar > span {
@@ -367,6 +367,21 @@
       right: 0;
       bottom: 0;
       height: 0%;
+    }
+    .timeline-bar-status {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%) rotate(-90deg);
+      transform-origin: center;
+      font-size: 0.64rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: #28465e;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.75);
+      pointer-events: none;
+      white-space: nowrap;
+      z-index: 2;
     }
     .timeline-bar-label {
       text-align: center;
@@ -381,8 +396,8 @@
     }
     .failed-attempts {
       display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
+      flex-direction: column;
+      align-items: center;
       gap: 3px;
       margin-top: 3px;
       min-height: 20px;
@@ -822,6 +837,14 @@
       }
       if (noah && maBlocks[4]) noah[maBlocks[4].id].applicable = false;
       if (noah && deBlocks[7]) noah[deBlocks[7].id].applicable = false;
+      const lina = studentPlans['Lina Steiner'];
+      if (lina && deBlocks[5]) {
+        lina[deBlocks[5].id].attempts = [
+          { date: '2025-10-05', percent: 51, fulfilled: false, repeat: true, repeatDate: '2025-10-19', selected: false },
+          { date: '2025-10-21', percent: 58, fulfilled: false, repeat: true, repeatDate: '2025-11-04', selected: false },
+          { date: '2025-11-08', percent: 72, fulfilled: true, repeat: false, repeatDate: '', selected: true }
+        ];
+      }
 
       return {
 
@@ -1174,8 +1197,8 @@
         const successAttempts = activeEntries.map(e => getSuccessAttempt(e.plan)).filter(Boolean);
         const attempted = activeEntries.reduce((n, e) => n + e.plan.attempts.length, 0);
         const succeeded = successAttempts.length;
-        const percents = successAttempts.map(a => Number(a.percent));
-        const avg = percents.length ? (percents.reduce((a,b)=>a+b,0) / percents.length) : 0;
+        const allAttemptPercents = activeEntries.flatMap(e => (Array.isArray(e.plan.attempts) ? e.plan.attempts : []).map(a => Number(a.percent)));
+        const avg = allAttemptPercents.length ? (allAttemptPercents.reduce((a,b)=>a+b,0) / allAttemptPercents.length) : 0;
 
         const today = todayISO();
         const dueEntries = activeEntries.filter(e => e.plan.targetDate && e.plan.targetDate <= today);
@@ -1267,7 +1290,8 @@
           const score = Math.max(0, Math.min(100, Number(selected ? selected.percent : 0)));
           const isInactive = !e.plan.applicable;
           const isDueOpen = !isInactive && timelineBehind && !selected && e.plan.targetDate && e.plan.targetDate <= today;
-          const barColor = isDueOpen ? '#c65a5a' : scoreBarColor(score, hasAttempt);
+          const displayScore = isDueOpen ? 100 : score;
+          const barColor = isDueOpen ? '#c65a5a' : scoreBarColor(displayScore, hasAttempt);
           const label = isInactive ? 'deaktiviert' : (hasAttempt ? `${selected.percent}%` : 'offen');
           const displayDate = hasAttempt ? selected.date : (e.plan.targetDate || 'kein Datum');
           const weekWeight = Math.max(1, Number(e.block.expectedWeeks || 1));
@@ -1277,9 +1301,8 @@
           }).join('');
           return `
             <div class="timeline-bar-wrap" style="flex-grow:${weekWeight};" title="${escapeHtmlAttr(e.block.name)} – ${escapeHtmlAttr(label)}">
-              <div><strong>${label}</strong></div>
               ${e.isDuplicate ? '<div class="timeline-repeat-link"></div>' : ''}
-              <div class="timeline-bar ${isInactive ? "inactive" : ""}"><span style="height:${score.toFixed(1)}%;background:${barColor}"></span></div>
+              <div class="timeline-bar ${isInactive ? "inactive" : ""}"><span style="height:${displayScore.toFixed(1)}%;background:${barColor}"></span><div class="timeline-bar-status" style="color:${isDueOpen ? '#8b1f2a' : (isInactive ? '#6f7680' : '#28465e')}">${label}</div></div>
               <div class="timeline-bar-label">LN ${idx + 1}${e.isDuplicate ? " ↻" : ""}</div>
               <div class="timeline-date" style="color:${isDueOpen ? "#9b2f39" : (isInactive ? "#8a939d" : "var(--muted)")}">${escapeHtml(displayDate)}</div>
               <div class="failed-attempts">${failedAttemptChips}</div>
