@@ -1008,7 +1008,10 @@
     }
 
     function renderSubjects() {
-      const opts = state.subjects.map(s => `<option>${escapeHtml(s)}</option>`).join('');
+      const selectedSubject = state.subjects.includes(newSubject.value) ? newSubject.value : (state.subjects[0] || '');
+      const opts = state.subjects
+        .map(s => `<option value="${escapeHtmlAttr(s)}" ${s===selectedSubject?'selected':''}>${escapeHtml(s)}</option>`)
+        .join('');
       newSubject.innerHTML = opts || '<option value="">Bitte Fachliste erfassen</option>';
       subjectBadges.innerHTML = state.subjects.map(s => `<span class="badge">${escapeHtml(s)} <button class="small secondary" data-remove-subject="${escapeHtmlAttr(s)}">x</button></span>`).join('') || '<span class="muted">Noch keine Fächer erfasst.</span>';
 
@@ -1017,8 +1020,7 @@
       ).join('');
       classPlanFilterSubject.innerHTML = filterOpts;
 
-      const subject = newSubject.value || state.subjects[0] || '';
-      const prevCandidates = state.classPlan.filter(b => !subject || b.subject === subject)
+      const prevCandidates = state.classPlan.filter(b => !selectedSubject || b.subject === selectedSubject)
         .map(b => `<option value="${b.id}">${escapeHtml(b.name)}</option>`)
         .join('');
       newPreviousBlock.innerHTML = `<option value="">Keiner</option>${prevCandidates}`;
@@ -1043,7 +1045,7 @@
           <td>${i+1}</td>
           <td>
             <select data-edit="subject" data-id="${b.id}">
-              ${state.subjects.map(s => `<option ${s===b.subject?'selected':''}>${escapeHtml(s)}</option>`).join('')}
+              ${state.subjects.map(s => `<option value="${escapeHtmlAttr(s)}" ${s===b.subject?'selected':''}>${escapeHtml(s)}</option>`).join('')}
             </select>
           </td>
           <td><input data-edit="name" data-id="${b.id}" value="${escapeHtml(b.name)}"></td>
